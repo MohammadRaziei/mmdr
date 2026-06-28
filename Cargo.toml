@@ -1,0 +1,33 @@
+[package]
+name = "mmdr-python"
+version = "0.1.0"
+edition = "2021"
+description = "Python bindings for mermaid-rs-renderer (mmdr)"
+license = "MIT"
+repository = "https://github.com/1jehuang/mermaid-rs-renderer"
+
+# This produces the actual compiled module that Python imports.
+# `name` here is the name Python will `import`, so we call it "mmdr".
+[lib]
+name = "mmdr"
+crate-type = ["cdylib"]
+
+[dependencies]
+# extension-module = required for building a Python extension
+# abi3-py39 = build ONE wheel that works on Python 3.9+ (no need to build
+# a separate wheel for every Python minor version).
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py39"] }
+
+# The actual rendering engine, pulled from crates.io.
+# default-features = false drops the "cli" feature (we don't need clap here).
+# We keep the "png" feature so we can also export PNG bytes.
+mermaid-rs-renderer = { version = "0.2.2", default-features = false, features = ["png"] }
+
+# Needed directly because we convert SVG -> PNG ourselves (the upstream
+# crate only exposes a "write PNG to a file path" helper, not "give me bytes").
+resvg = "0.47.0"
+usvg = "0.47.0"
+
+[profile.release]
+lto = true
+strip = true

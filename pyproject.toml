@@ -1,0 +1,33 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "mmdr"
+version = "0.1.0"
+description = "Fast native Mermaid diagram rendering (Rust, via PyO3) - no browser required"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+  { name = "1jehuang" }
+]
+keywords = ["mermaid", "diagram", "svg", "render", "rust"]
+classifiers = [
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/1jehuang/mermaid-rs-renderer"
+Repository = "https://github.com/1jehuang/mermaid-rs-renderer"
+
+[tool.maturin]
+# Cargo.toml is in this same folder.
+manifest-path = "Cargo.toml"
+# The compiled module is named "mmdr" (see [lib] in Cargo.toml),
+# so `import mmdr` works directly with no extra Python wrapper package.
+module-name = "mmdr"
+features = ["pyo3/extension-module"]
