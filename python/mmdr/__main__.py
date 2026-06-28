@@ -132,7 +132,7 @@ def build_parser() -> argparse.ArgumentParser:
              "with an XML parser, not regex). Ignores -e/--format.",
     )
     parser.add_argument(
-        "--version", "-v",
+        "--version",
         action="store_true",
         help="Print the mmdr version and exit.",
     )
@@ -162,6 +162,19 @@ def main(argv: list[str] | None = None) -> int:
         from . import __version__
         print(__version__)
         return 0
+
+    if args.input == "-" and sys.stdin.isatty():
+        # Nothing was piped in and there's no file to read - reading stdin
+        # here would just block forever waiting for input that's never
+        # coming. Fail fast with a helpful message instead.
+        parser.print_usage(sys.stderr)
+        print(
+            "mmdr: no input given and stdin is a terminal (not a pipe/file).\n"
+            "      Pass a file with -i diagram.mmd, or pipe a diagram in, e.g.:\n"
+            "      echo 'flowchart LR; A-->B' | mmdr",
+            file=sys.stderr,
+        )
+        return 1
 
     try:
         diagram = _read_input(args.input)
