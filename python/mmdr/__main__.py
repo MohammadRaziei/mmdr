@@ -21,18 +21,13 @@ from . import render, render_png
 
 
 def _extract_svg_text(svg: str) -> str:
-    """Parse the rendered SVG and pull out just the diagram's text labels.
-
-    This is *not* a re/string hack — it walks the real SVG element tree
-    (via xml.etree.ElementTree) and reads the text content of every
-    <text> element (tspans included), in document order. No drawing
-    commands, no coordinates, just the words that appear in the diagram.
+    """Parse an SVG string with a real XML parser and return just its
+    text content (every <text> element, tspans merged in), one per line.
     """
     root = ET.fromstring(svg)
 
-    # The root tag looks like "{http://www.w3.org/2000/svg}svg" since the
-    # renderer always sets an explicit xmlns. Reuse that namespace to find
-    # <text> elements correctly instead of guessing.
+    # The renderer always sets an explicit xmlns on the root <svg> tag, so
+    # reuse that namespace instead of guessing one.
     if root.tag.startswith("{"):
         ns_uri = root.tag[1:].split("}", 1)[0]
         text_tag = f"{{{ns_uri}}}text"
@@ -41,12 +36,9 @@ def _extract_svg_text(svg: str) -> str:
 
     lines = []
     for el in root.iter(text_tag):
-        # itertext() merges this <text> element's own text with all of its
-        # <tspan> children's text, in order - exactly the rendered label.
         line = "".join(el.itertext()).strip()
         if line:
             lines.append(line)
-
     return "\n".join(lines)
 
 
@@ -127,9 +119,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--info",
         action="store_true",
-        help="Don't output graphics - render to SVG internally, then extract "
-             "and print just the text labels found in the diagram (parsed "
-             "with an XML parser, not regex). Ignores -e/--format.",
+        help="Render Mermaid's built-in 'info' diagram (shows the version) "
+             "and print just its text, extracted from the SVG with an XML "
+             "parser. Takes no input - ignores -i/stdin and any diagram.",
     )
     parser.add_argument(
         "--version",
@@ -163,6 +155,29 @@ def main(argv: list[str] | None = None) -> int:
         print(__version__)
         return 0
 
+    if args.info:
+        # Mermaid's own built-in "info" diagram - we don't read any file or
+        # stdin here, the diagram source is just the literal word "info".
+        # This assumes the underlying renderer (mermaid-rs-renderer) knows
+        # how to render an "info" diagram into a valid SVG containing the
+        # version as text; we don't special-case it on our side.
+        try:
+            svg = render(
+                "info",
+                theme=args.theme,
+                node_spacing=args.node_spacing,
+                rank_spacing=args.rank_spacing,
+                aspect_ratio=args.aspect_ratio,
+            )
+            print(_extract_svg_text(svg))
+        except ValueError as exc:
+            print(f"mmdr: failed to render info diagram: {exc}", file=sys.stderr)
+            return 1
+        except ET.ParseError as exc:
+            print(f"mmdr: failed to parse generated SVG: {exc}", file=sys.stderr)
+            return 1
+        return 0
+
     if args.input == "-" and sys.stdin.isatty():
         # Nothing was piped in and there's no file to read - reading stdin
         # here would just block forever waiting for input that's never
@@ -185,19 +200,7 @@ def main(argv: list[str] | None = None) -> int:
     fmt = _guess_format(args)
 
     try:
-        if args.info:
-            # Always render to SVG first (PNG has no text nodes to read),
-            # regardless of -e/--format - --info is about the diagram's
-            # textual content, not its pixels.
-            svg = render(
-                diagram,
-                theme=args.theme,
-                node_spacing=args.node_spacing,
-                rank_spacing=args.rank_spacing,
-                aspect_ratio=args.aspect_ratio,
-            )
-            data = _extract_svg_text(svg).encode("utf-8")
-        elif fmt == "png":
+        if fmt == "png":
             data = render_png(
                 diagram,
                 theme=args.theme,
@@ -218,9 +221,6 @@ def main(argv: list[str] | None = None) -> int:
             data = text.encode("utf-8")
     except ValueError as exc:
         print(f"mmdr: failed to render diagram: {exc}", file=sys.stderr)
-        return 1
-    except ET.ParseError as exc:
-        print(f"mmdr: failed to parse generated SVG for --info: {exc}", file=sys.stderr)
         return 1
 
     if args.output == "-":
