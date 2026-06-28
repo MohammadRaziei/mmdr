@@ -10,7 +10,27 @@ No browser, no Node.js, no Puppeteer.
 pip install mmdr
 ```
 
-## Usage
+## CLI
+
+After `pip install mmdr` you also get an `mmdr` command, similar in spirit to
+[mermaid-cli](https://github.com/mermaid-js/mermaid-cli)'s `mmdc` — but it
+talks to the native Rust renderer directly, no browser involved:
+
+```bash
+mmdr -i input.mmd -o output.svg
+mmdr -i input.mmd -o output.png -t classic
+mmdr -i input.mmd -o output.png --width 1200 --height 800
+
+# stdin -> stdout
+echo 'flowchart LR; A-->B-->C' | mmdr -i - -o -
+
+# also works as:
+python -m mmdr -i input.mmd -o output.svg
+
+mmdr -h   # see all options
+```
+
+## Library
 
 ```python
 import mmdr

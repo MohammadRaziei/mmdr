@@ -113,9 +113,10 @@ fn render_png(
         .map_err(|e| PyValueError::new_err(format!("failed to encode PNG: {e}")))
 }
 
-/// mmdr: fast native Mermaid diagram rendering, powered by Rust.
+/// _mmdr: fast native Mermaid diagram rendering, powered by Rust.
+/// (Wrapped by the pure-Python `mmdr` package — see python/mmdr/__init__.py.)
 #[pymodule]
-fn mmdr(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn _mmdr(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(render, m)?)?;
     m.add_function(wrap_pyfunction!(render_png, m)?)?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;

@@ -24,10 +24,19 @@ classifiers = [
 Homepage = "https://github.com/1jehuang/mermaid-rs-renderer"
 Repository = "https://github.com/1jehuang/mermaid-rs-renderer"
 
+# This makes `mmdr` available as a terminal command after `pip install mmdr`,
+# same idea as mermaid-cli's `mmdc` command. It just calls main() in
+# python/mmdr/__main__.py.
+[project.scripts]
+mmdr = "mmdr.__main__:main"
+
 [tool.maturin]
 # Cargo.toml is in this same folder.
 manifest-path = "Cargo.toml"
-# The compiled module is named "mmdr" (see [lib] in Cargo.toml),
-# so `import mmdr` works directly with no extra Python wrapper package.
-module-name = "mmdr"
+# Pure-Python files (the public "mmdr" package: __init__.py, __main__.py, ...)
+# live here. maturin copies the compiled extension into python/mmdr/ alongside them.
+python-source = "python"
+# The compiled extension is importable as mmdr._mmdr; python/mmdr/__init__.py
+# re-exports the public functions from it so users just do `import mmdr`.
+module-name = "mmdr._mmdr"
 features = ["pyo3/extension-module"]

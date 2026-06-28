@@ -6,10 +6,12 @@ description = "Python bindings for mermaid-rs-renderer (mmdr)"
 license = "MIT"
 repository = "https://github.com/1jehuang/mermaid-rs-renderer"
 
-# This produces the actual compiled module that Python imports.
-# `name` here is the name Python will `import`, so we call it "mmdr".
+# This produces the actual compiled extension. It's named "_mmdr" (private,
+# underscore-prefixed) because the public, user-facing "mmdr" is now a real
+# Python package (see python/mmdr/) that wraps this extension and also adds
+# the CLI (__main__.py). This is the standard "mixed Python/Rust" maturin layout.
 [lib]
-name = "mmdr"
+name = "_mmdr"
 crate-type = ["cdylib"]
 
 [dependencies]
