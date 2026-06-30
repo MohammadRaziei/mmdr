@@ -2,33 +2,41 @@
 name = "mmdr-python"
 version = "0.1.0"
 edition = "2021"
-description = "Python bindings for mermaid-rs-renderer (mmdr)"
+description = "Python bindings for Mermaid rendering (mmdr) — two Rust backends"
 license = "MIT"
-repository = "https://github.com/1jehuang/mermaid-rs-renderer"
 
-# This produces the actual compiled extension. It's named "_mmdr" (private,
-# underscore-prefixed) because the public, user-facing "mmdr" is now a real
-# Python package (see python/mmdr/) that wraps this extension and also adds
-# the CLI (__main__.py). This is the standard "mixed Python/Rust" maturin layout.
 [lib]
 name = "_mmdr"
 crate-type = ["cdylib"]
 
+[features]
+default = ["backend-mermaid-rs", "backend-merman"]
+
+# Backend A: mermaid-rs-renderer (fast, fewer diagram types)
+# Pulls in resvg 0.47 for SVG→PNG.
+backend-mermaid-rs = [
+    "dep:mermaid-rs-renderer",
+    "dep:resvg",
+    "dep:usvg",
+]
+
+# Backend B: merman (parity-focused, targets Mermaid @11.15.0)
+# PNG/JPG/PDF are handled by merman's own raster feature — no extra deps.
+backend-merman = [
+    "dep:merman",
+]
+
 [dependencies]
-# extension-module = required for building a Python extension
-# abi3-py39 = build ONE wheel that works on Python 3.9+ (no need to build
-# a separate wheel for every Python minor version).
 pyo3 = { version = "0.22", features = ["extension-module", "abi3-py39"] }
 
-# The actual rendering engine, pulled from crates.io.
-# default-features = false drops the "cli" feature (we don't need clap here).
-# We keep the "png" feature so we can also export PNG bytes.
-mermaid-rs-renderer = { version = "0.2.2", default-features = false, features = ["png"] }
+mermaid-rs-renderer = { version = "0.2.2", optional = true, default-features = false }
 
-# Needed directly because we convert SVG -> PNG ourselves (the upstream
-# crate only exposes a "write PNG to a file path" helper, not "give me bytes").
-resvg = "0.47.0"
-usvg = "0.47.0"
+# resvg/usvg only needed for the mermaid-rs PNG path
+# (merman handles its own raster internally via its "raster" feature)
+resvg = { version = "0.47.0", optional = true }
+usvg  = { version = "0.47.0", optional = true }
+
+merman = { version = "0.7.0", optional = true, features = ["raster"] }
 
 [profile.release]
 lto = true

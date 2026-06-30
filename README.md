@@ -1,8 +1,11 @@
 # mmdr
 
-Fast native Mermaid diagram rendering for Python — powered by Rust
-([mermaid-rs-renderer](https://github.com/1jehuang/mermaid-rs-renderer)).
-No browser, no Node.js, no Puppeteer.
+Fast, headless Mermaid diagram rendering — two native Rust backends, **zero Python dependencies**.
+
+| Backend | Crate | Diagram support | PNG |
+|---|---|---|---|
+| `mermaid-rs-renderer` (default) | [mermaid-rs-renderer](https://github.com/1jehuang/mermaid-rs-renderer) | flowchart, class, sequence, state, … | via resvg |
+| `merman` | [merman](https://github.com/Latias94/merman) | full Mermaid @11.15.0 parity | native raster feature |
 
 ## Install
 
@@ -12,22 +15,12 @@ pip install mmdr
 
 ## CLI
 
-After `pip install mmdr` you also get an `mmdr` command, similar in spirit to
-[mermaid-cli](https://github.com/mermaid-js/mermaid-cli)'s `mmdc` — but it
-talks to the native Rust renderer directly, no browser involved:
-
 ```bash
-mmdr -i input.mmd -o output.svg
-mmdr -i input.mmd -o output.png -t classic
-mmdr -i input.mmd -o output.png --width 1200 --height 800
-
-# stdin -> stdout
-echo 'flowchart LR; A-->B-->C' | mmdr -i - -o -
-
-# also works as:
-python -m mmdr -i input.mmd -o output.svg
-
-mmdr -h   # see all options
+mmdr -i diagram.mmd -o output.svg
+mmdr -i diagram.mmd -o output.png --backend merman
+echo 'flowchart LR; A-->B' | mmdr -i - -o -
+mmdr --info
+mmdr -h
 ```
 
 ## Library
@@ -35,23 +28,55 @@ mmdr -h   # see all options
 ```python
 import mmdr
 
-svg = mmdr.render("flowchart LR; A-->B-->C")
-print(svg)
+mmdr.backends()
+# ['mermaid-rs-renderer', 'merman']
 
-png_bytes = mmdr.render_png("flowchart LR; A-->B-->C")
+# Default backend (mermaid-rs-renderer)
+svg = mmdr.render("flowchart LR; A-->B-->C")
+
+# merman backend
+svg = mmdr.render("flowchart LR; A-->B-->C", backend="merman")
+
+# PNG — mermaid-rs-renderer
+png = mmdr.render_png("flowchart LR; A-->B-->C", width=1200, height=800)
+
+# PNG — merman (native raster, no extra deps)
+png = mmdr.render_png(
+    "flowchart LR; A-->B-->C",
+    backend="merman",
+    width=1200,
+    height=800,
+    background="white",
+    scale=2.0,          # device pixel ratio
+)
+
 with open("out.png", "wb") as f:
-    f.write(png_bytes)
+    f.write(png)
 ```
 
-### Options
+## Options
+
+### mermaid-rs-renderer
 
 ```python
-mmdr.render(
-    diagram,
-    theme="modern",       # "modern" (default) or "classic"
+mmdr.render(diagram, backend="mermaid-rs-renderer",
+    theme="modern",           # "modern" (default) or "classic"
     node_spacing=60.0,
     rank_spacing=80.0,
     aspect_ratio=(16, 9),
+)
+```
+
+### merman
+
+```python
+mmdr.render(diagram, backend="merman")  # uses merman's own defaults
+
+mmdr.render_png(diagram, backend="merman",
+    width=800,              # fit-box width in pixels
+    height=600,             # fit-box height in pixels
+    background="#ffffff",   # CSS background color
+    scale=2.0,              # device pixel ratio
 )
 ```
 

@@ -1,23 +1,26 @@
 """
-Quick manual smoke test.
+Quick smoke test.
 
-Run after building the extension locally, e.g.:
-
-    pip install maturin
     maturin develop --release
     python examples/test.py
 """
-
 import mmdr
 
-svg = mmdr.render("flowchart LR; A-->B-->C")
-assert "<svg" in svg
-print("SVG render OK, length:", len(svg))
+print("backends:", mmdr.backends())
+assert "mermaid-rs-renderer" in mmdr.backends()
+assert "merman" in mmdr.backends()
 
-png_bytes = mmdr.render_png("flowchart LR; A-->B-->C")
-assert png_bytes[:8] == b"\x89PNG\r\n\x1a\n"
-with open("test_output.png", "wb") as f:
-    f.write(png_bytes)
-print("PNG render OK, wrote test_output.png (", len(png_bytes), "bytes)")
+DIAGRAM = "flowchart LR; A-->B-->C"
 
-print("version:", mmdr.__version__)
+for backend in mmdr.backends():
+    print(f"\n--- {backend} ---")
+
+    svg = mmdr.render(DIAGRAM, backend=backend)
+    assert "<svg" in svg
+    print(f"SVG OK ({len(svg)} bytes)")
+
+    png = mmdr.render_png(DIAGRAM, backend=backend)
+    assert png[:8] == b"\x89PNG\r\n\x1a\n"
+    print(f"PNG OK ({len(png)} bytes)")
+
+print("\nAll backends OK")

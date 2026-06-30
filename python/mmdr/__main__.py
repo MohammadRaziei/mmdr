@@ -80,6 +80,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output format. Defaults to the -o extension, or 'svg' if that's ambiguous.",
     )
     parser.add_argument(
+        "--backend",
+        choices=["mermaid-rs-renderer", "merman"],
+        default=None,
+        help="Rendering backend. Default: mermaid-rs-renderer. "
+             "Use 'merman' for full Mermaid @11.15.0 parity.",
+    )
+    parser.add_argument(
         "-t", "--theme",
         choices=["modern", "classic"],
         default="modern",
@@ -164,6 +171,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             svg = render(
                 "info",
+                backend=args.backend,
                 theme=args.theme,
                 node_spacing=args.node_spacing,
                 rank_spacing=args.rank_spacing,
@@ -203,6 +211,7 @@ def main(argv: list[str] | None = None) -> int:
         if fmt == "png":
             data = render_png(
                 diagram,
+                backend=args.backend,
                 theme=args.theme,
                 node_spacing=args.node_spacing,
                 rank_spacing=args.rank_spacing,
@@ -213,6 +222,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             text = render(
                 diagram,
+                backend=args.backend,
                 theme=args.theme,
                 node_spacing=args.node_spacing,
                 rank_spacing=args.rank_spacing,
