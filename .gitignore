@@ -132,3 +132,5 @@ ehthumbs_vista.db
 .fuse_hidden*
 .directory
 .trash
+
+/Cargo.lock
