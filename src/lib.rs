@@ -1,5 +1,6 @@
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 
 // ---------------------------------------------------------------------------
 // Backend selector
@@ -44,7 +45,8 @@ fn resolve_backend(name: Option<&str>) -> PyResult<Backend> {
 mod mermaid_rs_backend {
     use mermaid_rs_renderer::{RenderOptions, render_with_options};
     use pyo3::exceptions::PyValueError;
-    use pyo3::PyResult;
+    use pyo3::types::PyBytes;
+    use pyo3::{Bound, Python, PyResult};
 
     pub fn build_options(
         theme: Option<&str>,
@@ -91,7 +93,8 @@ mod mermaid_rs_backend {
         Some(resvg::tiny_skia::Color::from_rgba8(r, g, b, 255))
     }
 
-    pub fn render_png(
+    pub fn render_png<'py>(
+        py: Python<'py>,
         diagram: &str,
         theme: Option<&str>,
         node_spacing: Option<f32>,
@@ -99,7 +102,7 @@ mod mermaid_rs_backend {
         aspect_ratio: Option<(f32, f32)>,
         width: Option<f32>,
         height: Option<f32>,
-    ) -> PyResult<Vec<u8>> {
+    ) -> PyResult<Bound<'py, PyBytes>> {
         let opts = build_options(theme, node_spacing, rank_spacing, aspect_ratio);
         let font_family = opts.theme.font_family.clone();
         let background = opts.theme.background.clone();
@@ -109,11 +112,8 @@ mod mermaid_rs_backend {
 
         let mut usvg_opts = usvg::Options {
             font_family: primary_font(&font_family),
-            default_size: usvg::Size::from_wh(
-                width.unwrap_or(800.0),
-                height.unwrap_or(600.0),
-            )
-            .unwrap_or_else(|| usvg::Size::from_wh(800.0, 600.0).unwrap()),
+            default_size: usvg::Size::from_wh(width.unwrap_or(800.0), height.unwrap_or(600.0))
+                .unwrap_or_else(|| usvg::Size::from_wh(800.0, 600.0).unwrap()),
             ..Default::default()
         };
         usvg_opts.fontdb_mut().load_system_fonts();
@@ -131,8 +131,12 @@ mod mermaid_rs_backend {
 
         resvg::render(&tree, resvg::tiny_skia::Transform::default(), &mut pixmap.as_mut());
 
-        pixmap.encode_png()
-            .map_err(|e| PyValueError::new_err(format!("failed to encode PNG: {e}")))
+        let data = pixmap.encode_png()
+            .map_err(|e| PyValueError::new_err(format!("failed to encode PNG: {e}")))?;
+
+        // Use PyBytes to ensure Python receives `bytes`, not `list[int]`
+        // (Vec<u8> in PyO3 0.22 converts to list[int] by default).
+        Ok(PyBytes::new(py, &data))
     }
 }
 
@@ -144,7 +148,8 @@ mod mermaid_rs_backend {
 mod merman_backend {
     use merman::render::{HeadlessRenderer, raster::RasterOptions};
     use pyo3::exceptions::PyValueError;
-    use pyo3::PyResult;
+    use pyo3::types::PyBytes;
+    use pyo3::{Bound, Python, PyResult};
 
     pub fn render_svg(diagram: &str) -> PyResult<String> {
         HeadlessRenderer::new()
@@ -155,13 +160,14 @@ mod merman_backend {
             ))
     }
 
-    pub fn render_png(
+    pub fn render_png<'py>(
+        py: Python<'py>,
         diagram: &str,
         width: Option<u32>,
         height: Option<u32>,
         background: Option<&str>,
         scale: Option<f32>,
-    ) -> PyResult<Vec<u8>> {
+    ) -> PyResult<Bound<'py, PyBytes>> {
         let mut raster = RasterOptions::default();
         if let Some(bg) = background { raster = raster.with_background(bg); }
         if let Some(s) = scale { raster = raster.with_scale(s); }
@@ -172,12 +178,14 @@ mod merman_backend {
                 .with_size_limit(RasterSizeLimit::unbounded());
         }
 
-        HeadlessRenderer::new()
+        let data = HeadlessRenderer::new()
             .render_png_sync(diagram, &raster)
             .map_err(|e| PyValueError::new_err(e.to_string()))?
             .ok_or_else(|| PyValueError::new_err(
                 "merman: diagram type not recognised or input is empty",
-            ))
+            ))?;
+
+        Ok(PyBytes::new(py, &data))
     }
 }
 
@@ -186,14 +194,6 @@ mod merman_backend {
 // ---------------------------------------------------------------------------
 
 /// Render a Mermaid diagram to an SVG string.
-///
-/// Args:
-///   diagram:      The Mermaid source text.
-///   backend:      "mermaid-rs-renderer" (default) or "merman".
-///   theme:        "modern" (default) or "classic" — mermaid-rs-renderer only.
-///   node_spacing: Horizontal node gap — mermaid-rs-renderer only.
-///   rank_spacing: Vertical level gap — mermaid-rs-renderer only.
-///   aspect_ratio: Preferred (width, height) ratio — mermaid-rs-renderer only.
 #[pyfunction]
 #[pyo3(signature = (
     diagram,
@@ -223,16 +223,8 @@ fn render(
 
 /// Render a Mermaid diagram to PNG bytes.
 ///
-/// Args:
-///   diagram:      The Mermaid source text.
-///   backend:      "mermaid-rs-renderer" (default) or "merman".
-///
-///   mermaid-rs-renderer options:
-///     theme, node_spacing, rank_spacing, aspect_ratio, width, height
-///
-///   merman options:
-///     width, height (fit-box in pixels), background (CSS color), scale (DPR float)
-///     (theme/node_spacing/rank_spacing/aspect_ratio are ignored for merman)
+/// Returns Python `bytes`. Uses `PyBytes` explicitly to avoid PyO3 0.22's
+/// default `Vec<u8>` → `list[int]` conversion.
 #[pyfunction]
 #[pyo3(signature = (
     diagram,
@@ -247,7 +239,8 @@ fn render(
     scale = None,
 ))]
 #[allow(clippy::too_many_arguments)]
-fn render_png(
+fn render_png<'py>(
+    py: Python<'py>,
     diagram: &str,
     backend: Option<&str>,
     theme: Option<&str>,
@@ -258,14 +251,15 @@ fn render_png(
     height: Option<f32>,
     background: Option<&str>,
     scale: Option<f32>,
-) -> PyResult<Vec<u8>> {
+) -> PyResult<Bound<'py, PyBytes>> {
     match resolve_backend(backend)? {
         #[cfg(feature = "backend-mermaid-rs")]
         Backend::MermaidRs => mermaid_rs_backend::render_png(
-            diagram, theme, node_spacing, rank_spacing, aspect_ratio, width, height,
+            py, diagram, theme, node_spacing, rank_spacing, aspect_ratio, width, height,
         ),
         #[cfg(feature = "backend-merman")]
         Backend::Merman => merman_backend::render_png(
+            py,
             diagram,
             width.map(|w| w as u32),
             height.map(|h| h as u32),
@@ -276,11 +270,6 @@ fn render_png(
 }
 
 /// Return the list of backends compiled into this wheel.
-///
-/// Example::
-///
-///     >>> mmdr.backends()
-///     ['mermaid-rs-renderer', 'merman']
 #[pyfunction]
 fn backends() -> Vec<&'static str> {
     let mut out = Vec::new();
@@ -291,7 +280,7 @@ fn backends() -> Vec<&'static str> {
     out
 }
 
-/// _mmdr: Mermaid rendering in Rust — two backends, zero Python dependencies.
+/// _mmdr: internal Rust extension — use the `mmdr` package, not this directly.
 #[pymodule]
 fn _mmdr(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(render, m)?)?;

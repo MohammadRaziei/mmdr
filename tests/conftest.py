@@ -1,18 +1,7 @@
-"""
-Shared fixtures and helpers for the mmdr test suite.
-
-Run with:
-    pip install pytest
-    maturin develop --release
-    pytest tests/ -v
-"""
+"""Shared fixtures and helpers."""
 
 import pytest
 import mmdr
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 SIMPLE_FLOWCHART = "flowchart LR\n    A-->B-->C"
 
@@ -47,16 +36,12 @@ PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
 def is_valid_svg(text: str) -> bool:
-    return text.strip().startswith("<svg") and "</svg>" in text
+    return isinstance(text, str) and "<svg" in text and "</svg>" in text
 
 
 def is_valid_png(data: bytes) -> bool:
-    return data[:8] == PNG_MAGIC
+    return isinstance(data, bytes) and data[:8] == PNG_MAGIC
 
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
 
 @pytest.fixture(params=mmdr.backends())
 def backend(request):
@@ -66,15 +51,13 @@ def backend(request):
 
 @pytest.fixture
 def mermaid_rs():
-    """Force mermaid-rs-renderer backend, skip if not compiled in."""
     if "mermaid-rs-renderer" not in mmdr.backends():
-        pytest.skip("mermaid-rs-renderer backend not compiled in")
+        pytest.skip("mermaid-rs-renderer not compiled in")
     return "mermaid-rs-renderer"
 
 
 @pytest.fixture
 def merman():
-    """Force merman backend, skip if not compiled in."""
     if "merman" not in mmdr.backends():
-        pytest.skip("merman backend not compiled in")
+        pytest.skip("merman not compiled in")
     return "merman"

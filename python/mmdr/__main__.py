@@ -1,14 +1,11 @@
 """
 Command-line interface for mmdr.
 
-Modeled loosely on mermaid-cli's `mmdc` (https://github.com/mermaid-js/mermaid-cli),
-but talks to the native Rust renderer directly instead of spawning a browser.
-
     mmdr -i input.mmd -o output.svg
-    mmdr -i input.mmd -o output.png -t classic
+    mmdr -i input.mmd -o output.png --backend merman
     echo 'flowchart LR; A-->B' | mmdr -i - -o -
-
-Run `mmdr -h` for all options.
+    mmdr --info
+    mmdr -h
 """
 
 from __future__ import annotations
@@ -17,23 +14,16 @@ import argparse
 import sys
 import xml.etree.ElementTree as ET
 
-from . import render, render_png
+import mmdr
 
 
 def _extract_svg_text(svg: str) -> str:
-    """Parse an SVG string with a real XML parser and return just its
-    text content (every <text> element, tspans merged in), one per line.
-    """
     root = ET.fromstring(svg)
-
-    # The renderer always sets an explicit xmlns on the root <svg> tag, so
-    # reuse that namespace instead of guessing one.
     if root.tag.startswith("{"):
         ns_uri = root.tag[1:].split("}", 1)[0]
         text_tag = f"{{{ns_uri}}}text"
     else:
         text_tag = "text"
-
     lines = []
     for el in root.iter(text_tag):
         line = "".join(el.itertext()).strip()
@@ -43,7 +33,6 @@ def _extract_svg_text(svg: str) -> str:
 
 
 def _parse_aspect_ratio(value: str) -> tuple[float, float]:
-    """Parse "16:9" or "16x9" into (16.0, 9.0)."""
     sep = ":" if ":" in value else "x"
     try:
         w_str, h_str = value.split(sep, 1)
@@ -63,77 +52,54 @@ def build_parser() -> argparse.ArgumentParser:
         description="Render a Mermaid diagram to SVG or PNG (no browser required).",
     )
     parser.add_argument(
-        "-i", "--input",
-        default="-",
+        "-i", "--input", default="-",
         help="Input .mmd file. Use '-' (default) to read from stdin.",
     )
     parser.add_argument(
-        "-o", "--output",
-        default="-",
+        "-o", "--output", default="-",
         help="Output file. Use '-' (default) to write to stdout. "
              "Format is guessed from the extension (.svg / .png) unless -e is given.",
     )
     parser.add_argument(
-        "-e", "--format",
-        choices=["svg", "png"],
-        default=None,
-        help="Output format. Defaults to the -o extension, or 'svg' if that's ambiguous.",
+        "-e", "--format", choices=["svg", "png"], default=None,
+        help="Output format. Defaults to the -o extension, or 'svg' if ambiguous.",
     )
     parser.add_argument(
-        "--backend",
-        choices=["mermaid-rs-renderer", "merman"],
-        default=None,
-        help="Rendering backend. Default: mermaid-rs-renderer. "
-             "Use 'merman' for full Mermaid @11.15.0 parity.",
+        "--backend", choices=["mermaid-rs-renderer", "merman"], default=None,
+        help="Rendering backend (default: mermaid-rs-renderer).",
     )
     parser.add_argument(
-        "-t", "--theme",
-        choices=["modern", "classic"],
-        default="modern",
-        help="Color theme (default: modern). 'classic' matches mermaid's default look.",
+        "-t", "--theme", choices=["modern", "classic"], default="modern",
+        help="Color theme (mermaid-rs-renderer only, default: modern).",
     )
     parser.add_argument(
-        "-w", "--width",
-        type=float,
-        default=None,
-        help="Output canvas width in pixels (PNG only).",
+        "-w", "--width", type=float, default=None,
+        help="Output canvas width in pixels (PNG).",
     )
     parser.add_argument(
-        "-H", "--height",
-        type=float,
-        default=None,
-        help="Output canvas height in pixels (PNG only).",
+        "-H", "--height", type=float, default=None,
+        help="Output canvas height in pixels (PNG).",
     )
     parser.add_argument(
-        "--node-spacing",
-        type=float,
-        default=None,
-        help="Horizontal spacing between sibling nodes.",
+        "--node-spacing", type=float, default=None,
+        help="Node spacing (mermaid-rs-renderer only).",
     )
     parser.add_argument(
-        "--rank-spacing",
-        type=float,
-        default=None,
-        help="Spacing between ranks/levels of the diagram.",
+        "--rank-spacing", type=float, default=None,
+        help="Rank spacing (mermaid-rs-renderer only).",
     )
     parser.add_argument(
-        "--aspect-ratio",
-        type=_parse_aspect_ratio,
-        default=None,
-        metavar="W:H",
-        help="Preferred output aspect ratio, e.g. '16:9'.",
+        "--aspect-ratio", type=_parse_aspect_ratio, default=None, metavar="W:H",
+        help="Preferred aspect ratio, e.g. '16:9' (mermaid-rs-renderer only).",
     )
     parser.add_argument(
-        "--info",
-        action="store_true",
-        help="Render Mermaid's built-in 'info' diagram (shows the version) "
-             "and print just its text, extracted from the SVG with an XML "
-             "parser. Takes no input - ignores -i/stdin and any diagram.",
+        "--info", action="store_true",
+        help="Render Mermaid's built-in 'info' diagram and print its text. "
+             "No input needed.",
     )
     parser.add_argument(
-        "--version",
-        action="store_true",
-        help="Print the mmdr version and exit.",
+        "--version", action="store_true",
+        help="Print mmdr version and exit.",
     )
     return parser
 
@@ -158,87 +124,58 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.version:
-        from . import __version__
-        print(__version__)
+        print(mmdr.__version__)
         return 0
 
     if args.info:
-        # Mermaid's own built-in "info" diagram - we don't read any file or
-        # stdin here, the diagram source is just the literal word "info".
-        # This assumes the underlying renderer (mermaid-rs-renderer) knows
-        # how to render an "info" diagram into a valid SVG containing the
-        # version as text; we don't special-case it on our side.
         try:
-            svg = render(
-                "info",
-                backend=args.backend,
-                theme=args.theme,
-                node_spacing=args.node_spacing,
-                rank_spacing=args.rank_spacing,
-                aspect_ratio=args.aspect_ratio,
-            )
-            print(_extract_svg_text(svg))
-        except ValueError as exc:
-            print(f"mmdr: failed to render info diagram: {exc}", file=sys.stderr)
-            return 1
-        except ET.ParseError as exc:
-            print(f"mmdr: failed to parse generated SVG: {exc}", file=sys.stderr)
+            d = mmdr.render("info", backend=args.backend)
+            print(_extract_svg_text(d.svg()))
+        except (ValueError, ET.ParseError) as exc:
+            print(f"mmdr: --info failed: {exc}", file=sys.stderr)
             return 1
         return 0
 
     if args.input == "-" and sys.stdin.isatty():
-        # Nothing was piped in and there's no file to read - reading stdin
-        # here would just block forever waiting for input that's never
-        # coming. Fail fast with a helpful message instead.
         parser.print_usage(sys.stderr)
         print(
-            "mmdr: no input given and stdin is a terminal (not a pipe/file).\n"
-            "      Pass a file with -i diagram.mmd, or pipe a diagram in, e.g.:\n"
+            "mmdr: no input given and stdin is a terminal.\n"
+            "      Pass a file with -i diagram.mmd, or pipe:\n"
             "      echo 'flowchart LR; A-->B' | mmdr",
             file=sys.stderr,
         )
         return 1
 
     try:
-        diagram = _read_input(args.input)
+        source = _read_input(args.input)
     except OSError as exc:
         print(f"mmdr: could not read {args.input!r}: {exc}", file=sys.stderr)
         return 1
 
-    fmt = _guess_format(args)
+    render_opts = dict(
+        backend=args.backend,
+        theme=args.theme,
+        node_spacing=args.node_spacing,
+        rank_spacing=args.rank_spacing,
+        aspect_ratio=args.aspect_ratio,
+        width=args.width,
+        height=args.height,
+    )
 
     try:
-        if fmt == "png":
-            data = render_png(
-                diagram,
-                backend=args.backend,
-                theme=args.theme,
-                node_spacing=args.node_spacing,
-                rank_spacing=args.rank_spacing,
-                aspect_ratio=args.aspect_ratio,
-                width=args.width,
-                height=args.height,
-            )
-        else:
-            text = render(
-                diagram,
-                backend=args.backend,
-                theme=args.theme,
-                node_spacing=args.node_spacing,
-                rank_spacing=args.rank_spacing,
-                aspect_ratio=args.aspect_ratio,
-            )
-            data = text.encode("utf-8")
-    except ValueError as exc:
-        print(f"mmdr: failed to render diagram: {exc}", file=sys.stderr)
-        return 1
+        d = mmdr.render(source, **{k: v for k, v in render_opts.items() if v is not None})
+        fmt = _guess_format(args)
 
-    if args.output == "-":
-        sys.stdout.buffer.write(data)
-        sys.stdout.buffer.flush()
-    else:
-        with open(args.output, "wb") as f:
-            f.write(data)
+        if args.output == "-":
+            data = d.png() if fmt == "png" else d.svg().encode("utf-8")
+            sys.stdout.buffer.write(data)
+            sys.stdout.buffer.flush()
+        else:
+            d.save(args.output)
+
+    except (ValueError, NotImplementedError) as exc:
+        print(f"mmdr: {exc}", file=sys.stderr)
+        return 1
 
     return 0
 
