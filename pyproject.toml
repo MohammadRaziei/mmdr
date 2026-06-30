@@ -40,3 +40,10 @@ python-source = "python"
 # re-exports the public functions from it so users just do `import mmdr`.
 module-name = "mmdr._mmdr"
 features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+# Add your source code directories to the Python search path
+pythonpath = ["python"]
+# Limit where pytest looks for test files to save time and prevent false positives
+testpaths = ["tests"]
