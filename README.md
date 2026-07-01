@@ -1,227 +1,111 @@
 # mmdr
 
-Fast, headless Mermaid diagram rendering — powered by Rust, zero Python dependencies.
+Mermaid diagram rendering — fast, native, no browser required.
+
+Built on Rust. No Node.js, no Puppeteer, no headless Chrome. Just install and render.
 
 ```bash
 pip install mmdr
 ```
 
-Two SVG backends. All rasterization (PNG, raw pixels) via [resvg](https://github.com/RazrFalcon/resvg) inside the extension — no Pillow, no Cairo, no browser.
+**Output formats:** SVG · PNG · raw pixels (RGBA) · NumPy array
 
-| Backend | Crate | Diagram support |
-|---|---|---|
-| `merman` **(default)** | [Latias94/merman](https://github.com/Latias94/merman) | Full Mermaid @11.15.0 parity |
-| `mermaid-rs-renderer` | [1jehuang/mermaid-rs-renderer](https://github.com/1jehuang/mermaid-rs-renderer) | Common types, faster |
+**Two backends:**
+- `merman` *(default)* — full Mermaid parity, supports all diagram types
+- `mermaid-rs-renderer` — faster, covers common diagram types
 
 ---
 
 ## CLI
 
-After `pip install mmdr` you get an `mmdr` command. It works like
-[mermaid-cli](https://github.com/mermaid-js/mermaid-cli)'s `mmdc`, but
-talks to native Rust — no Node.js, no browser.
-
-### Basic usage
-
 ```bash
-# SVG from a file
+# SVG
 mmdr -i diagram.mmd -o output.svg
 
-# PNG from a file
-mmdr -i diagram.mmd -o output.png
+# PNG
+mmdr -i diagram.mmd -o output.png --width 1200 --background '#ffffff'
 
-# Read from stdin, write to stdout
+# stdin → stdout
 echo 'flowchart LR; A-->B-->C' | mmdr -i - -o -
 
-# Pipe and redirect
-mmdr -i diagram.mmd -o - > output.svg
-```
+# choose backend
+mmdr -i diagram.mmd -o output.svg --backend mermaid-rs-renderer
 
-### Options
-
-```bash
-mmdr -i diagram.mmd -o output.png \
-  --backend mermaid-rs-renderer \   # choose backend (default: merman)
-  --width 1200 \                    # PNG canvas width in pixels
-  --height 800 \                    # PNG canvas height in pixels
-  --background '#ffffff' \          # PNG background color
-  --theme classic                   # mermaid-rs-renderer only
-
-mmdr --info        # render Mermaid's built-in info diagram, print its text
-mmdr --version     # print mmdr version
-mmdr -h            # full help
-```
-
-### Real-world examples
-
-```bash
-# Render a sequence diagram to PNG with white background
-mmdr -i sequence.mmd -o sequence.png --background '#ffffff' --width 1000
-
-# Use the faster backend for a simple flowchart
-mmdr -i flow.mmd -o flow.svg --backend mermaid-rs-renderer
-
-# Batch convert all .mmd files in a directory
+# batch
 for f in diagrams/*.mmd; do
     mmdr -i "$f" -o "${f%.mmd}.svg"
 done
+
+mmdr --info       # Mermaid version info
+mmdr --version    # mmdr version
+mmdr -h           # all options
 ```
 
 ---
 
-## Python API
-
-### `mmdr.render(diagram, backend=None, **opts) → Diagram`
-
-Returns a `Diagram` object. The SVG is rendered **lazily** — only when you
-first call `.svg()`, `.png()`, `.save()`, etc.
+## Python
 
 ```python
 import mmdr
 
 d = mmdr.render("flowchart LR; A-->B-->C")
+
+d.svg()                                    # str
+d.png()                                    # bytes
+d.png(width=1200, background="#ffffff")    # bytes, with options
+d.raw()                                    # (bytes, width, height) — RGBA8888
+d.numpy()                                  # np.ndarray (H×W×4, uint8)
+d.save("output.svg")                       # auto-detects format
+d.save("output.png", width=1200)
 ```
 
----
-
-### `Diagram.svg() → str`
-
-Returns the SVG source as a string. Cached after the first call.
-
-```python
-svg = mmdr.render("flowchart LR; A-->B-->C").svg()
-print(svg)  # <svg xmlns="http://www.w3.org/2000/svg" ...>...</svg>
-
-# Write manually
-with open("output.svg", "w") as f:
-    f.write(svg)
-```
-
----
-
-### `Diagram.png(width=None, height=None, background=None) → bytes`
-
-Rasterizes the SVG via resvg and returns PNG bytes.
-
-```python
-png = mmdr.render("flowchart LR; A-->B-->C").png()
-
-# With options
-png = mmdr.render("sequenceDiagram\n  Alice->>Bob: Hello").png(
-    width=800,
-    height=600,
-    background="#ffffff",   # hex color, transparent by default
-)
-
-with open("output.png", "wb") as f:
-    f.write(png)
-```
-
----
-
-### `Diagram.raw(width=None, height=None, background=None) → (bytes, int, int)`
-
-Returns raw RGBA8888 pixel data as `(bytes, width, height)`.
-Stride is `width * 4`. No encoding — the pixel buffer comes straight out of resvg.
-
-```python
-raw, w, h = mmdr.render("flowchart LR; A-->B-->C").raw()
-print(f"{w}x{h}, {len(raw)} bytes")  # e.g. 640x480, 1228800 bytes
-```
-
----
-
-### `Diagram.numpy(width=None, height=None, background=None) → np.ndarray`
-
-Returns an `(H, W, 4)` NumPy array, dtype `uint8`, RGBA. Built on top of
-`.raw()` — no Pillow needed, just `numpy`.
-
-```python
-import numpy as np
-import mmdr
-
-arr = mmdr.render("flowchart LR; A-->B-->C").numpy()
-print(arr.shape)   # (480, 640, 4)
-print(arr.dtype)   # uint8
-
-# Flip upside-down
-flipped = np.flipud(arr)
-
-# Drop alpha channel → RGB
-rgb = arr[:, :, :3]
-```
-
----
-
-### `Diagram.save(output, width=None, height=None, background=None)`
-
-Saves to a file. The format is inferred from the extension (`.svg` or `.png`).
-
-```python
-d = mmdr.render("flowchart LR; A-->B-->C")
-
-d.save("output.svg")                              # SVG
-d.save("output.png")                              # PNG, transparent bg
-d.save("output.png", width=1200, background="#ffffff")  # PNG with options
-```
-
----
+The result is lazy — rendering happens on first access and the SVG is cached.
 
 ### Backends
 
 ```python
-mmdr.backends()
-# ['merman', 'mermaid-rs-renderer']
-
-# Default (merman) — full diagram support
-d = mmdr.render("kanban\n  todo\n    Task A\n    Task B")
+# merman (default) — all diagram types
+d = mmdr.render("kanban\n  todo\n    Task A")
 d.svg()
 
-# mermaid-rs-renderer — faster for common diagrams
+# mermaid-rs-renderer — faster, with layout options
 d = mmdr.render(
     "flowchart LR; A-->B-->C",
     backend="mermaid-rs-renderer",
-    theme="classic",       # "modern" (default) or "classic"
+    theme="classic",          # "modern" (default) or "classic"
     node_spacing=60.0,
     rank_spacing=80.0,
     aspect_ratio=(16, 9),
 )
 d.svg()
+
+mmdr.backends()
+# ['merman', 'mermaid-rs-renderer']
 ```
 
----
+### Jupyter
 
-### Jupyter / IPython
-
-`Diagram` implements `_repr_svg_()`, so it renders inline automatically:
+`Diagram` renders inline automatically — no extra steps needed:
 
 ```python
-import mmdr
-
-mmdr.render("flowchart LR; A-->B-->C")   # displays inline in Jupyter
+mmdr.render("flowchart LR; A-->B-->C")   # displays inline
 ```
 
----
-
-### Low-level SVG utilities
-
-The Rust extension also exports `svg_to_png` and `svg_to_raw` directly,
-for when you already have an SVG string from somewhere else:
+### Raw SVG utilities
 
 ```python
 from mmdr import svg_to_png, svg_to_raw
 
-my_svg = open("existing.svg").read()
-
-png = svg_to_png(my_svg, width=800, background="#ffffff")
-raw, w, h = svg_to_raw(my_svg)
+svg = open("existing.svg").read()
+png = svg_to_png(svg, width=800, background="#ffffff")
+raw, w, h = svg_to_raw(svg)
 ```
 
 ---
 
-## Supported diagram types
+## Supported diagrams
 
-| Diagram | merman | mermaid-rs-renderer |
+| | merman | mermaid-rs-renderer |
 |---|:---:|:---:|
 | flowchart / graph | ✅ | ✅ |
 | sequenceDiagram | ✅ | ✅ |
