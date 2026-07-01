@@ -2,7 +2,7 @@
 Command-line interface for mmdr.
 
     mmdr -i input.mmd -o output.svg
-    mmdr -i input.mmd -o output.png --backend merman
+    mmdr -i input.mmd -o output.png --backend mermaid-rs-renderer
     echo 'flowchart LR; A-->B' | mmdr -i - -o -
     mmdr --info
     mmdr -h
@@ -19,11 +19,8 @@ import mmdr
 
 def _extract_svg_text(svg: str) -> str:
     root = ET.fromstring(svg)
-    if root.tag.startswith("{"):
-        ns_uri = root.tag[1:].split("}", 1)[0]
-        text_tag = f"{{{ns_uri}}}text"
-    else:
-        text_tag = "text"
+    ns_uri = root.tag[1:].split("}", 1)[0] if root.tag.startswith("{") else None
+    text_tag = f"{{{ns_uri}}}text" if ns_uri else "text"
     lines = []
     for el in root.iter(text_tag):
         line = "".join(el.itertext()).strip()
@@ -57,45 +54,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "-o", "--output", default="-",
-        help="Output file. Use '-' (default) to write to stdout. "
-             "Format is guessed from the extension (.svg / .png) unless -e is given.",
+        help="Output file. Use '-' to write to stdout. "
+             "Format is guessed from the extension (.svg/.png).",
     )
     parser.add_argument(
         "-e", "--format", choices=["svg", "png"], default=None,
-        help="Output format. Defaults to the -o extension, or 'svg' if ambiguous.",
+        help="Output format override.",
     )
     parser.add_argument(
-        "--backend", choices=["mermaid-rs-renderer", "merman"], default=None,
-        help="Rendering backend (default: mermaid-rs-renderer).",
+        "--backend", choices=["merman", "mermaid-rs-renderer"], default=None,
+        help="SVG backend (default: merman).",
     )
     parser.add_argument(
-        "-t", "--theme", choices=["modern", "classic"], default="modern",
-        help="Color theme (mermaid-rs-renderer only, default: modern).",
+        "-t", "--theme", choices=["modern", "classic"], default=None,
+        help="Color theme — mermaid-rs-renderer only.",
     )
     parser.add_argument(
         "-w", "--width", type=float, default=None,
-        help="Output canvas width in pixels (PNG).",
+        help="Output width in pixels (PNG).",
     )
     parser.add_argument(
         "-H", "--height", type=float, default=None,
-        help="Output canvas height in pixels (PNG).",
+        help="Output height in pixels (PNG).",
+    )
+    parser.add_argument(
+        "-b", "--background", default=None, metavar="COLOR",
+        help="Background color as CSS hex, e.g. '#ffffff' (PNG only).",
     )
     parser.add_argument(
         "--node-spacing", type=float, default=None,
-        help="Node spacing (mermaid-rs-renderer only).",
+        help="Node spacing — mermaid-rs-renderer only.",
     )
     parser.add_argument(
         "--rank-spacing", type=float, default=None,
-        help="Rank spacing (mermaid-rs-renderer only).",
+        help="Rank spacing — mermaid-rs-renderer only.",
     )
     parser.add_argument(
         "--aspect-ratio", type=_parse_aspect_ratio, default=None, metavar="W:H",
-        help="Preferred aspect ratio, e.g. '16:9' (mermaid-rs-renderer only).",
+        help="Preferred aspect ratio — mermaid-rs-renderer only.",
     )
     parser.add_argument(
         "--info", action="store_true",
-        help="Render Mermaid's built-in 'info' diagram and print its text. "
-             "No input needed.",
+        help="Render Mermaid's built-in 'info' diagram and print its text.",
     )
     parser.add_argument(
         "--version", action="store_true",
@@ -152,26 +152,33 @@ def main(argv: list[str] | None = None) -> int:
         print(f"mmdr: could not read {args.input!r}: {exc}", file=sys.stderr)
         return 1
 
-    render_opts = dict(
-        backend=args.backend,
-        theme=args.theme,
-        node_spacing=args.node_spacing,
-        rank_spacing=args.rank_spacing,
-        aspect_ratio=args.aspect_ratio,
-        width=args.width,
-        height=args.height,
-    )
+    svg_opts = {k: v for k, v in {
+        "backend": args.backend,
+        "theme": args.theme,
+        "node_spacing": args.node_spacing,
+        "rank_spacing": args.rank_spacing,
+        "aspect_ratio": args.aspect_ratio,
+    }.items() if v is not None}
+
+    png_kwargs = {k: v for k, v in {
+        "width": args.width,
+        "height": args.height,
+        "background": args.background,
+    }.items() if v is not None}
 
     try:
-        d = mmdr.render(source, **{k: v for k, v in render_opts.items() if v is not None})
+        d = mmdr.render(source, **svg_opts)
         fmt = _guess_format(args)
 
         if args.output == "-":
-            data = d.png() if fmt == "png" else d.svg().encode("utf-8")
+            data = d.png(**png_kwargs) if fmt == "png" else d.svg().encode("utf-8")
             sys.stdout.buffer.write(data)
             sys.stdout.buffer.flush()
         else:
-            d.save(args.output)
+            if fmt == "png":
+                d.save(args.output, **png_kwargs)
+            else:
+                d.save(args.output)
 
     except (ValueError, NotImplementedError) as exc:
         print(f"mmdr: {exc}", file=sys.stderr)

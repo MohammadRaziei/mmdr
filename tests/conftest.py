@@ -4,7 +4,6 @@ import pytest
 import mmdr
 
 SIMPLE_FLOWCHART = "flowchart LR\n    A-->B-->C"
-
 COMPLEX_FLOWCHART = """
 flowchart TD
     A[Start] --> B{Decision}
@@ -13,13 +12,11 @@ flowchart TD
     C --> E[End]
     D --> E
 """
-
 SEQUENCE = """
 sequenceDiagram
     Alice->>Bob: Hello
     Bob-->>Alice: Hi back
 """
-
 CLASS_DIAGRAM = """
 classDiagram
     class Animal {
@@ -45,7 +42,7 @@ def is_valid_png(data: bytes) -> bool:
 
 @pytest.fixture(params=mmdr.backends())
 def backend(request):
-    """Parametrize every test that uses this fixture over all compiled backends."""
+    """Parametrize every test over all compiled backends."""
     return request.param
 
 

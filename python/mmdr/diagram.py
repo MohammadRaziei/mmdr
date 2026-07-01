@@ -1,9 +1,9 @@
 """
-The Diagram class: the object returned by mmdr.render().
+Diagram — the object returned by mmdr.render().
 
-Lazily renders the diagram on first access, caches the SVG, and provides
-format-specific accessors (.svg(), .png(), .pdf(), .numpy()) plus a
-.save() helper that infers the output format from the file extension.
+SVG comes from the chosen backend (merman or mermaid-rs-renderer).
+Everything else (PNG, raw pixels, numpy) is produced by resvg inside the
+Rust extension — no Python imaging dependencies needed.
 """
 
 from __future__ import annotations
@@ -18,127 +18,141 @@ if TYPE_CHECKING:
 
 
 class Diagram:
-    """A Mermaid diagram ready to be rendered to multiple output formats.
+    """A rendered Mermaid diagram.
 
-    Created by :func:`mmdr.render`. The source is rendered lazily: the
-    first call to :meth:`svg` (or any derived method) triggers the actual
-    render; the result is cached so subsequent calls are free.
+    Created by :func:`mmdr.render`. SVG is computed lazily on first access
+    and cached. PNG and raw pixels are always derived from that SVG via resvg.
 
     Example::
 
         import mmdr
 
         d = mmdr.render("flowchart LR; A-->B-->C")
-        d.save("diagram.svg")
-        d.save("diagram.png", width=1200)
-        print(d.svg())
-        img = d.numpy()             # requires numpy + Pillow
+
+        d.svg()                          # str
+        d.png()                          # bytes (PNG)
+        d.png(width=1200, background="#ffffff")
+        d.raw()                          # (bytes, width, height) — RGBA8888
+        d.numpy()                        # np.ndarray H×W×4, no Pillow needed
+        d.save("out.svg")
+        d.save("out.png", width=1200)
+        d._repr_svg_()                   # Jupyter inline rendering
     """
 
-    def __init__(
-        self,
-        source: str,
-        backend: str | None = None,
-        **opts,
-    ) -> None:
+    def __init__(self, source: str, backend: str | None = None, **opts) -> None:
         self._source = source
         self._backend = backend
         self._opts = opts
         self._svg_cache: str | None = None
 
     # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
-    def _svg_opts(self) -> dict:
-        valid = {"theme", "node_spacing", "rank_spacing", "aspect_ratio"}
-        return {k: v for k, v in self._opts.items() if k in valid and v is not None}
-
-    def _png_opts(self) -> dict:
-        valid = {
-            "theme", "node_spacing", "rank_spacing", "aspect_ratio",
-            "width", "height", "background", "scale",
-        }
-        return {k: v for k, v in self._opts.items() if k in valid and v is not None}
-
-    # ------------------------------------------------------------------
-    # Output formats
+    # SVG — from the chosen backend
     # ------------------------------------------------------------------
 
     def svg(self) -> str:
         """Return the diagram as an SVG string (cached after first call)."""
         if self._svg_cache is None:
-            self._svg_cache = _mmdr.render(
-                self._source, self._backend, **self._svg_opts()
-            )
+            svg_opts = {
+                k: v for k, v in self._opts.items()
+                if k in {"theme", "node_spacing", "rank_spacing", "aspect_ratio"}
+                and v is not None
+            }
+            self._svg_cache = _mmdr.render(self._source, self._backend, **svg_opts)
         return self._svg_cache
 
-    def png(self, **kwargs) -> bytes:
+    # ------------------------------------------------------------------
+    # Rasterization — always via resvg inside the Rust extension
+    # ------------------------------------------------------------------
+
+    def png(
+        self,
+        width: float | None = None,
+        height: float | None = None,
+        background: str | None = None,
+    ) -> bytes:
         """Return the diagram as PNG bytes.
 
-        Keyword arguments override any options set at construction time.
-        Valid options depend on the backend:
-
-        mermaid-rs-renderer:
-            width, height (canvas size hint in pixels),
-            theme, node_spacing, rank_spacing, aspect_ratio
-
-        merman:
-            width, height (fit-box in pixels),
-            background (CSS color, e.g. ``"#ffffff"``),
-            scale (device pixel ratio, e.g. ``2.0`` for HiDPI)
+        Args:
+            width:      Canvas width hint in pixels.
+            height:     Canvas height hint in pixels.
+            background: Background fill as a CSS hex color, e.g. ``"#ffffff"``.
+                        Transparent by default.
         """
-        opts = {**self._png_opts(), **kwargs}
-        return _mmdr.render_png(self._source, self._backend, **opts)
+        return _mmdr.svg_to_png(self.svg(), width, height, background)
 
-    def pdf(self) -> bytes:
-        """Return the diagram as PDF bytes.
+    def raw(
+        self,
+        width: float | None = None,
+        height: float | None = None,
+        background: str | None = None,
+    ) -> tuple[bytes, int, int]:
+        """Return raw RGBA8888 pixel data as ``(bytes, width, height)``.
 
-        Not yet supported. Planned via merman's ``svg2pdf`` feature.
+        The bytes have stride ``width * 4``, row-major, top-to-bottom.
+        No Python imaging library needed — resvg writes pixels directly
+        into a Rust buffer and hands it to Python as ``bytes``.
+
+        Args:
+            width:      Canvas width hint in pixels.
+            height:     Canvas height hint in pixels.
+            background: Background fill as a CSS hex color.
         """
-        raise NotImplementedError(
-            "PDF export is not yet supported. "
-            "Planned for a future release via merman's svg2pdf feature."
-        )
+        return _mmdr.svg_to_raw(self.svg(), width, height, background)
 
-    def numpy(self) -> "np.ndarray":
+    def numpy(
+        self,
+        width: float | None = None,
+        height: float | None = None,
+        background: str | None = None,
+    ) -> "np.ndarray":
         """Return the diagram as a NumPy array (H×W×4, uint8, RGBA).
 
-        Requires ``numpy`` and ``Pillow``::
+        No Pillow needed — uses :meth:`raw` directly.
+        Requires ``numpy``::
 
-            pip install numpy Pillow
+            pip install numpy
         """
         try:
-            import numpy as np_mod
+            import numpy as np
         except ImportError as exc:
             raise ImportError(
                 "numpy is required for .numpy(). Install it with:\n"
                 "    pip install numpy"
             ) from exc
-        try:
-            from PIL import Image
-        except ImportError as exc:
-            raise ImportError(
-                "Pillow is required for .numpy(). Install it with:\n"
-                "    pip install Pillow"
-            ) from exc
-        import io
-        return np_mod.array(Image.open(io.BytesIO(self.png())))
+
+        raw, w, h = self.raw(width=width, height=height, background=background)
+        return np.frombuffer(raw, dtype=np.uint8).reshape(h, w, 4)
+
+    def pdf(self) -> bytes:
+        """Return the diagram as PDF bytes.
+
+        Not yet supported — planned via resvg/krilla.
+        """
+        raise NotImplementedError(
+            "PDF export is not yet supported. Planned for a future release."
+        )
 
     # ------------------------------------------------------------------
     # Save
     # ------------------------------------------------------------------
 
-    def save(self, output: str, **kwargs) -> None:
-        """Save the diagram to *output*, inferring the format from its extension.
+    def save(
+        self,
+        output: str,
+        width: float | None = None,
+        height: float | None = None,
+        background: str | None = None,
+    ) -> None:
+        """Save the diagram to *output*, inferring the format from the extension.
 
         Args:
-            output: destination path, e.g. ``"diagram.svg"`` or ``"diagram.png"``.
-            **kwargs: forwarded to the relevant format method
-                      (same options as :meth:`png`).
+            output:     Destination path, e.g. ``"diagram.svg"`` or ``"diagram.png"``.
+            width:      Canvas width in pixels (PNG only).
+            height:     Canvas height in pixels (PNG only).
+            background: Background color, e.g. ``"#ffffff"`` (PNG only).
 
         Raises:
-            ValueError: if the extension is not recognised.
+            ValueError: if the file extension is not recognised.
         """
         path = Path(output)
         suffix = path.suffix.lower()
@@ -146,13 +160,13 @@ class Diagram:
         if suffix == ".svg":
             path.write_text(self.svg(), encoding="utf-8")
         elif suffix == ".png":
-            path.write_bytes(self.png(**kwargs))
+            path.write_bytes(self.png(width=width, height=height, background=background))
         elif suffix == ".pdf":
-            path.write_bytes(self.pdf(**kwargs))  # type: ignore[call-arg]
+            path.write_bytes(self.pdf())
         else:
             raise ValueError(
                 f"Cannot infer output format from {output!r}. "
-                "Supported extensions: .svg, .png, .pdf"
+                "Supported extensions: .svg  .png  .pdf"
             )
 
     # ------------------------------------------------------------------

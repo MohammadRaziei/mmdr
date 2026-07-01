@@ -2,7 +2,7 @@
 name = "mmdr-python"
 version = "0.1.0"
 edition = "2021"
-description = "Python bindings for Mermaid rendering (mmdr) — two Rust backends"
+description = "Python bindings for Mermaid rendering — two backends, all rasterization via resvg"
 license = "MIT"
 
 [lib]
@@ -11,33 +11,21 @@ crate-type = ["cdylib"]
 
 [features]
 default = ["backend-mermaid-rs", "backend-merman"]
-
-# Backend A: mermaid-rs-renderer (fast, fewer diagram types)
-# Pulls in resvg 0.47 for SVG→PNG.
-backend-mermaid-rs = [
-    "dep:mermaid-rs-renderer",
-    "dep:resvg",
-    "dep:usvg",
-]
-
-# Backend B: merman (parity-focused, targets Mermaid @11.15.0)
-# PNG/JPG/PDF are handled by merman's own raster feature — no extra deps.
-backend-merman = [
-    "dep:merman",
-]
+backend-mermaid-rs = ["dep:mermaid-rs-renderer"]
+backend-merman     = ["dep:merman"]
 
 [dependencies]
 pyo3 = { version = "0.22", features = ["extension-module", "abi3-py39"] }
 
+# SVG backends (optional)
 mermaid-rs-renderer = { version = "0.2.2", optional = true, default-features = false }
+merman              = { version = "0.7.0",  optional = true, features = ["raster"] }
 
-# resvg/usvg only needed for the mermaid-rs PNG path
-# (merman handles its own raster internally via its "raster" feature)
-resvg = { version = "0.47.0", optional = true }
-usvg  = { version = "0.47.0", optional = true }
-
-merman = { version = "0.7.0", optional = true, features = ["raster"] }
+# Rasterization — always present, used by svg_to_png() and svg_to_raw()
+# regardless of which SVG backend produced the string.
+resvg = "0.47.0"
+usvg  = "0.47.0"
 
 [profile.release]
-lto = true
+lto   = true
 strip = true

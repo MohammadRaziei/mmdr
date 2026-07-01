@@ -1,4 +1,4 @@
-"""Tests for Diagram.png() — PNG byte output."""
+"""Tests for Diagram.png() and Diagram.raw() — all rasterized via resvg."""
 
 import struct
 import pytest
@@ -6,88 +6,108 @@ import mmdr
 from conftest import SIMPLE_FLOWCHART, COMPLEX_FLOWCHART, is_valid_png
 
 
-def png_dimensions(data: bytes) -> tuple[int, int]:
-    """Extract (width, height) from a PNG IHDR chunk — no Pillow needed."""
-    assert isinstance(data, bytes), f"expected bytes, got {type(data)}"
-    assert data[:8] == b"\x89PNG\r\n\x1a\n", "not a PNG file"
-    width  = struct.unpack(">I", data[16:20])[0]
-    height = struct.unpack(">I", data[20:24])[0]
-    return width, height
+def png_wh(data: bytes) -> tuple[int, int]:
+    """Extract (width, height) from PNG IHDR — no Pillow needed."""
+    assert isinstance(data, bytes), f"expected bytes, got {type(data).__name__}"
+    assert data[:8] == b"\x89PNG\r\n\x1a\n", f"not PNG, got {data[:8]!r}"
+    return struct.unpack(">II", data[16:24])
 
 
-class TestPngBasic:
+class TestPng:
     def test_returns_bytes(self, backend):
-        data = mmdr.render(SIMPLE_FLOWCHART, backend=backend).png()
-        assert isinstance(data, bytes), f"expected bytes, got {type(data)}"
+        result = mmdr.render(SIMPLE_FLOWCHART, backend=backend).png()
+        assert isinstance(result, bytes), f"expected bytes, got {type(result).__name__}"
 
-    def test_valid_png_magic(self, backend):
+    def test_valid_magic(self, backend):
         data = mmdr.render(SIMPLE_FLOWCHART, backend=backend).png()
         assert is_valid_png(data), f"PNG magic missing, got {data[:8]!r}"
 
     def test_nonempty(self, backend):
-        data = mmdr.render(SIMPLE_FLOWCHART, backend=backend).png()
-        assert len(data) > 512
+        assert len(mmdr.render(SIMPLE_FLOWCHART, backend=backend).png()) > 512
 
     def test_default_backend(self):
         data = mmdr.render(SIMPLE_FLOWCHART).png()
         assert is_valid_png(data)
 
     def test_complex_diagram(self, backend):
-        data = mmdr.render(COMPLEX_FLOWCHART, backend=backend).png()
-        assert is_valid_png(data)
+        assert is_valid_png(mmdr.render(COMPLEX_FLOWCHART, backend=backend).png())
 
-
-class TestPngDimensions:
-    def test_has_positive_dimensions(self, backend):
+    def test_positive_dimensions(self, backend):
         data = mmdr.render(SIMPLE_FLOWCHART, backend=backend).png()
-        w, h = png_dimensions(data)
+        w, h = png_wh(data)
         assert w > 0 and h > 0
 
-    def test_mermaid_rs_width_height(self, mermaid_rs):
-        data = mmdr.render(SIMPLE_FLOWCHART, backend=mermaid_rs).png(
-            width=400.0, height=300.0
-        )
+    def test_width_height_hint(self, backend):
+        data = mmdr.render(SIMPLE_FLOWCHART, backend=backend).png(width=400.0, height=300.0)
         assert is_valid_png(data)
 
-    def test_merman_fit_box(self, merman):
-        data = mmdr.render(SIMPLE_FLOWCHART, backend=merman).png(
-            width=800.0, height=600.0
-        )
-        w, h = png_dimensions(data)
-        assert w > 0 and h > 0
+    def test_background_white(self, backend):
+        data = mmdr.render(SIMPLE_FLOWCHART, backend=backend).png(background="#ffffff")
+        assert is_valid_png(data)
 
+    def test_background_transparent(self, backend):
+        data = mmdr.render(SIMPLE_FLOWCHART, backend=backend).png(background=None)
+        assert is_valid_png(data)
 
-class TestPngMermaidRsOptions:
-    def test_theme_modern(self, mermaid_rs):
-        d = mmdr.render(SIMPLE_FLOWCHART, backend=mermaid_rs, theme="modern")
-        assert is_valid_png(d.png())
-
-    def test_theme_classic(self, mermaid_rs):
-        d = mmdr.render(SIMPLE_FLOWCHART, backend=mermaid_rs, theme="classic")
-        assert is_valid_png(d.png())
-
-    def test_aspect_ratio(self, mermaid_rs):
-        d = mmdr.render(SIMPLE_FLOWCHART, backend=mermaid_rs, aspect_ratio=(16.0, 9.0))
-        assert is_valid_png(d.png())
-
-
-class TestPngMermanOptions:
-    def test_background_white(self, merman):
-        d = mmdr.render(SIMPLE_FLOWCHART, backend=merman)
-        assert is_valid_png(d.png(background="#ffffff"))
-
-    def test_scale_2x_is_larger_than_1x(self, merman):
-        d = mmdr.render(SIMPLE_FLOWCHART, backend=merman)
-        data_1x = d.png(scale=1.0)
-        data_2x = d.png(scale=2.0)
-        assert len(data_2x) > len(data_1x)
-
-
-class TestPngErrors:
     def test_unknown_backend_raises(self):
         with pytest.raises(ValueError, match="unknown backend"):
             mmdr.render(SIMPLE_FLOWCHART, backend="fake").png()
 
-    def test_invalid_diagram_merman_raises(self, merman):
-        with pytest.raises(ValueError):
-            mmdr.render("!!!not mermaid###", backend=merman).png()
+
+class TestRaw:
+    def test_returns_tuple(self, backend):
+        result = mmdr.render(SIMPLE_FLOWCHART, backend=backend).raw()
+        assert isinstance(result, tuple) and len(result) == 3
+
+    def test_raw_is_bytes(self, backend):
+        raw, w, h = mmdr.render(SIMPLE_FLOWCHART, backend=backend).raw()
+        assert isinstance(raw, bytes), f"expected bytes, got {type(raw).__name__}"
+
+    def test_dimensions_positive(self, backend):
+        raw, w, h = mmdr.render(SIMPLE_FLOWCHART, backend=backend).raw()
+        assert w > 0 and h > 0
+
+    def test_stride_is_rgba(self, backend):
+        raw, w, h = mmdr.render(SIMPLE_FLOWCHART, backend=backend).raw()
+        # RGBA8888: exactly width * height * 4 bytes
+        assert len(raw) == w * h * 4, (
+            f"expected {w*h*4} bytes for {w}x{h} RGBA, got {len(raw)}"
+        )
+
+    def test_background_white(self, backend):
+        raw, w, h = mmdr.render(SIMPLE_FLOWCHART, backend=backend).raw(background="#ffffff")
+        assert isinstance(raw, bytes) and len(raw) == w * h * 4
+
+
+class TestNumpy:
+    def test_shape_and_dtype(self, backend):
+        pytest.importorskip("numpy")
+        import numpy as np
+        arr = mmdr.render(SIMPLE_FLOWCHART, backend=backend).numpy()
+        assert isinstance(arr, np.ndarray)
+        assert arr.ndim == 3
+        assert arr.shape[2] == 4       # RGBA
+        assert arr.dtype == np.uint8
+
+    def test_numpy_raises_without_numpy(self, backend, monkeypatch):
+        import builtins
+        real_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "numpy":
+                raise ImportError("mocked: numpy not installed")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", mock_import)
+        with pytest.raises(ImportError, match="numpy"):
+            mmdr.render(SIMPLE_FLOWCHART, backend=backend).numpy()
+
+    def test_numpy_consistent_with_raw(self, backend):
+        """numpy() should be exactly np.frombuffer(raw, uint8).reshape(h, w, 4)."""
+        pytest.importorskip("numpy")
+        import numpy as np
+        d = mmdr.render(SIMPLE_FLOWCHART, backend=backend)
+        raw, w, h = d.raw()
+        expected = np.frombuffer(raw, dtype=np.uint8).reshape(h, w, 4)
+        actual = d.numpy()
+        assert np.array_equal(actual, expected)

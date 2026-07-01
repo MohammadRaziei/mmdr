@@ -1,26 +1,28 @@
 """
 mmdr — Mermaid diagram rendering backed by native Rust.
 
-Two backends, zero Python dependencies:
-  - 'mermaid-rs-renderer' (default): fast, ~3ms per diagram
-  - 'merman': full Mermaid @11.15.0 parity
+Two SVG backends, all rasterization via resvg — zero Python dependencies:
+  - 'merman' (default): full Mermaid @11.15.0 parity
+  - 'mermaid-rs-renderer': faster, fewer diagram types
 
 Basic usage::
 
     import mmdr
 
-    d = mmdr.render("flowchart LR; A-->B-->C")
-    d.svg()                          # SVG string
-    d.png()                          # PNG bytes
-    d.save("diagram.svg")            # auto-detects format
-    d.save("diagram.png", width=1200)
-    d.numpy()                        # numpy array (requires numpy+Pillow)
+    d = mmdr.render("flowchart LR; A-->B-->C")   # default: merman
+    d.svg()                                        # str
+    d.png()                                        # bytes
+    d.png(width=1200, background="#ffffff")
+    d.raw()                                        # (bytes, w, h) — RGBA8888
+    d.numpy()                                      # np.ndarray, no Pillow
+    d.save("out.svg")
+    d.save("out.png", width=1200)
 
     mmdr.backends()
-    # ['mermaid-rs-renderer', 'merman']
+    # ['merman', 'mermaid-rs-renderer']
 """
 
-from ._mmdr import backends, __version__
+from ._mmdr import backends, svg_to_png, svg_to_raw, __version__
 from .diagram import Diagram
 
 
@@ -28,27 +30,22 @@ def render(
     diagram: str,
     backend: str | None = None,
     **opts,
-) -> "Diagram":
+) -> Diagram:
     """Render a Mermaid diagram.
 
     Args:
         diagram: Mermaid source text.
-        backend: ``"mermaid-rs-renderer"`` (default) or ``"merman"``.
-        **opts: rendering options forwarded to the backend.
+        backend: ``"merman"`` (default) or ``"mermaid-rs-renderer"``.
+        **opts:  Options forwarded to the SVG backend.
 
-            mermaid-rs-renderer options:
-                theme (``"modern"`` | ``"classic"``),
-                node_spacing, rank_spacing, aspect_ratio
-
-            merman options (PNG only):
-                width, height, background, scale
+                 mermaid-rs-renderer only:
+                   theme (``"modern"`` | ``"classic"``),
+                   node_spacing, rank_spacing, aspect_ratio
 
     Returns:
-        A :class:`Diagram` instance. The actual render is lazy — it only
-        happens on the first call to :meth:`~Diagram.svg`,
-        :meth:`~Diagram.png`, or :meth:`~Diagram.save`.
+        A :class:`Diagram`. The SVG is rendered lazily on first access.
     """
     return Diagram(diagram, backend=backend, **opts)
 
 
-__all__ = ["render", "Diagram", "backends", "__version__"]
+__all__ = ["render", "Diagram", "backends", "svg_to_png", "svg_to_raw", "__version__"]
