@@ -111,7 +111,8 @@ jobs:
           pip install pytest
 
       - name: Run tests
-        run: cd tests && python3 -m pytest -v
+        run: python3 -m pytest . -v
+        working-directory: tests
         
 
   # ---------------------------------------------------------------------------
