@@ -111,7 +111,7 @@ jobs:
           pip install pytest
 
       - name: Run tests
-        run: pytest tests/ -v
+        run: python3 -m pytest tests/ -v
 
   # ---------------------------------------------------------------------------
   # Release — GitHub release + PyPI on tags
