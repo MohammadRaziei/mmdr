@@ -104,8 +104,6 @@ jobs:
           path:           dist
           merge-multiple: true
 
-      - run: ls -LR dist
-
       - name: Install wheel + test deps
         shell: bash
         run: |
