@@ -28,11 +28,18 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest  target: x86_64   manylinux: auto
-          - os: ubuntu-latest  target: aarch64  manylinux: auto
-          - os: windows-latest target: x64
-          - os: macos-latest   target: x86_64
-          - os: macos-latest   target: aarch64
+          - os: ubuntu-latest  
+            target: x86_64   
+            manylinux: auto
+          - os: ubuntu-latest  
+            target: aarch64  
+            manylinux: auto
+          - os: windows-latest 
+            target: x64
+          - os: macos-latest   
+            target: x86_64
+          - os: macos-latest   
+            target: aarch64
 
     steps:
       - uses: actions/checkout@v4
