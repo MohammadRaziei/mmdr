@@ -113,7 +113,9 @@ jobs:
           pip install pytest
 
       - name: Run tests
-        run: python3 -m pytest tests/ -v
+        run: |
+          rm -rf pyproject.toml
+          python3 -m pytest tests/ -v
 
   # ---------------------------------------------------------------------------
   # Release — GitHub release + PyPI on tags
