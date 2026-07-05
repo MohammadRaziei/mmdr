@@ -110,9 +110,9 @@ jobs:
           pip install --no-index --upgrade --find-links ./dist mmdr
           pip install pytest
 
-      # - uses: JesseTG/rm@v1.0.3
-      #   with:
-      #     path: pyproject.toml
+      - uses: JesseTG/rm@v1.0.3
+        with:
+          path: pyproject.toml
 
       - name: Run tests
         run: python3 -m pytest tests/ -v
