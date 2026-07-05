@@ -30,6 +30,12 @@ Repository = "https://github.com/1jehuang/mermaid-rs-renderer"
 [project.scripts]
 mmdr = "mmdr.__main__:main"
 
+[project.optional-dependencies]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+]
+
 [tool.maturin]
 manifest-path = "Cargo.toml"
 python-source = "src"
