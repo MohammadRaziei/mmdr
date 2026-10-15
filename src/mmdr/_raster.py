@@ -8,7 +8,8 @@ Notes on novasvg behaviour that this module normalises:
 * ``Document.load_from_data`` returns ``None`` for invalid SVG instead of raising.
 * ``Document.render_to_bitmap`` defaults to an *opaque black* background, so a
   transparent background has to be requested explicitly.
-* ``Bitmap.numpy()`` returns premultiplied BGRA; ``convert_to_rgba()`` turns it
+* Raw pixels are only available through ``Bitmap.numpy()`` (NumPy is therefore a
+  mmdr dependency; novasvg itself no longer requires it). It returns premultiplied BGRA; ``convert_to_rgba()`` turns it
   into straight (non-premultiplied) RGBA, which is what PNG and NumPy users expect.
 """
 

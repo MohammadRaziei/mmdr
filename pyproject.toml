@@ -11,6 +11,9 @@ license = { text = "MIT" }
 requires-python = ">=3.9"
 dependencies = [
   "novasvg>=0.10",
+  # novasvg exposes raw pixels only through Bitmap.numpy(), and NumPy has not
+  # been a dependency of novasvg since 0.10.1.
+  "numpy>=1.20",
 ]
 authors = [
   { name = "1jehuang" }

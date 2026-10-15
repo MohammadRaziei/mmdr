@@ -90,7 +90,7 @@ print(f"{w}×{h}, {len(raw)} bytes")  # 640×480, 1228800 bytes
 ### `.numpy(width, height, background) → np.ndarray`
 
 Return an `(H, W, 4)` NumPy array, dtype `uint8`, RGBA channel order.
-NumPy is installed automatically together with novasvg. No Pillow needed.
+NumPy is a dependency of mmdr and is installed automatically. No Pillow needed.
 
 ```python
 arr = d.numpy()

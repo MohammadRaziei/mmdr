@@ -107,7 +107,7 @@ class Diagram:
         """Return the diagram as a NumPy array (H×W×4, uint8, RGBA).
 
         No Pillow needed — uses :meth:`raw` directly.
-        NumPy is installed automatically together with novasvg.
+        NumPy is a dependency of mmdr and is installed automatically.
         """
         import numpy as np
 
