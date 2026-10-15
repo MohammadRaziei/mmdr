@@ -15,28 +15,6 @@ def render(
     """Render a Mermaid diagram to an SVG string."""
     ...
 
-def svg_to_png(
-    svg: str,
-    width: Optional[float] = None,
-    height: Optional[float] = None,
-    background: Optional[str] = None,
-) -> bytes:
-    """Convert an SVG string to PNG bytes using resvg."""
-    ...
-
-def svg_to_raw(
-    svg: str,
-    width: Optional[float] = None,
-    height: Optional[float] = None,
-    background: Optional[str] = None,
-) -> Tuple[bytes, int, int]:
-    """Convert an SVG string to raw RGBA8888 bytes.
-
-    Returns (raw_bytes, width, height).
-    Use with numpy: np.frombuffer(raw, dtype=np.uint8).reshape(h, w, 4)
-    """
-    ...
-
 def backends() -> List[str]:
     """Return the list of SVG backends compiled into this wheel."""
     ...

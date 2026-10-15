@@ -9,6 +9,9 @@ description = "Fast native Mermaid diagram rendering (Rust-based) - no browser r
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
+dependencies = [
+  "novasvg>=0.10",
+]
 authors = [
   { name = "1jehuang" }
 ]

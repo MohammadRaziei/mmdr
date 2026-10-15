@@ -79,7 +79,8 @@ class TestErrors:
         with pytest.raises(ValueError):
             mmdr.render("this is !!!not### mermaid", backend=merman).svg()
 
-    def test_invalid_diagram_mermaid_rs_returns_error_svg(self, mermaid_rs):
-        # mermaid-rs-renderer renders an error SVG instead of raising
-        result = mmdr.render("!!!not mermaid###", backend=mermaid_rs).svg()
-        assert isinstance(result, str)
+    def test_invalid_diagram_mermaid_rs_raises(self, mermaid_rs):
+        # mermaid-rs-renderer >= 0.3 raises like merman (older versions
+        # returned an error SVG instead).
+        with pytest.raises(ValueError):
+            mmdr.render("!!!not mermaid###", backend=mermaid_rs).svg()

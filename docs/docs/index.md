@@ -68,7 +68,7 @@ system dependencies — just a ~7 MB wheel.
 
 mmdr ships with two Rust rendering engines in one package:
 
-- **`merman`** *(default)* — targets full parity with Mermaid @11.15.0, supports all diagram types
+- **`merman`** *(default)* — targets full parity with the official Mermaid library (baseline defined by the merman crate), supports all diagram types
 - **`mermaid-rs-renderer`** — faster and lighter, covers the most common diagram types
 
 ```python

@@ -2,8 +2,8 @@
 Diagram — the object returned by mmdr.render().
 
 SVG comes from the chosen backend (merman or mermaid-rs-renderer).
-Everything else (PNG, raw pixels, numpy) is produced by resvg inside the
-Rust extension — no Python imaging dependencies needed.
+Everything else (PNG, raw pixels, numpy) is rasterized by novasvg — no Pillow
+needed.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from . import _mmdr
+from . import _mmdr, _raster
 
 if TYPE_CHECKING:
     import numpy as np
@@ -21,7 +21,7 @@ class Diagram:
     """A rendered Mermaid diagram.
 
     Created by :func:`mmdr.render`. SVG is computed lazily on first access
-    and cached. PNG and raw pixels are always derived from that SVG via resvg.
+    and cached. PNG and raw pixels are always derived from that SVG via novasvg.
 
     Example::
 
@@ -61,7 +61,7 @@ class Diagram:
         return self._svg_cache
 
     # ------------------------------------------------------------------
-    # Rasterization — always via resvg inside the Rust extension
+    # Rasterization — always via novasvg
     # ------------------------------------------------------------------
 
     def png(
@@ -73,12 +73,12 @@ class Diagram:
         """Return the diagram as PNG bytes.
 
         Args:
-            width:      Canvas width hint in pixels.
-            height:     Canvas height hint in pixels.
+            width:      Output width in pixels (height follows the aspect ratio if omitted).
+            height:     Output height in pixels.
             background: Background fill as a CSS hex color, e.g. ``"#ffffff"``.
                         Transparent by default.
         """
-        return _mmdr.svg_to_png(self.svg(), width, height, background)
+        return _raster.svg_to_png(self.svg(), width, height, background)
 
     def raw(
         self,
@@ -88,16 +88,15 @@ class Diagram:
     ) -> tuple[bytes, int, int]:
         """Return raw RGBA8888 pixel data as ``(bytes, width, height)``.
 
-        The bytes have stride ``width * 4``, row-major, top-to-bottom.
-        No Python imaging library needed — resvg writes pixels directly
-        into a Rust buffer and hands it to Python as ``bytes``.
+        The bytes have stride ``width * 4``, row-major, top-to-bottom, with
+        straight (non-premultiplied) alpha. No Python imaging library needed.
 
         Args:
-            width:      Canvas width hint in pixels.
-            height:     Canvas height hint in pixels.
+            width:      Output width in pixels (height follows the aspect ratio if omitted).
+            height:     Output height in pixels.
             background: Background fill as a CSS hex color.
         """
-        return _mmdr.svg_to_raw(self.svg(), width, height, background)
+        return _raster.svg_to_raw(self.svg(), width, height, background)
 
     def numpy(
         self,
@@ -108,17 +107,9 @@ class Diagram:
         """Return the diagram as a NumPy array (H×W×4, uint8, RGBA).
 
         No Pillow needed — uses :meth:`raw` directly.
-        Requires ``numpy``::
-
-            pip install numpy
+        NumPy is installed automatically together with novasvg.
         """
-        try:
-            import numpy as np
-        except ImportError as exc:
-            raise ImportError(
-                "numpy is required for .numpy(). Install it with:\n"
-                "    pip install numpy"
-            ) from exc
+        import numpy as np
 
         raw, w, h = self.raw(width=width, height=height, background=background)
         return np.frombuffer(raw, dtype=np.uint8).reshape(h, w, 4)
@@ -126,7 +117,7 @@ class Diagram:
     def pdf(self) -> bytes:
         """Return the diagram as PDF bytes.
 
-        Not yet supported — planned via resvg/krilla.
+        Not yet supported — planned for a future release.
         """
         raise NotImplementedError(
             "PDF export is not yet supported. Planned for a future release."

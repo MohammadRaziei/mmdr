@@ -60,7 +60,7 @@ print(svg)  # <svg xmlns="http://www.w3.org/2000/svg" ...>
 
 ### `.png(width, height, background) → bytes`
 
-Return the diagram as PNG bytes, rasterized via resvg.
+Return the diagram as PNG bytes, rasterized via novasvg.
 
 ```python
 png = d.png()
@@ -72,15 +72,15 @@ with open("output.png", "wb") as f:
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `width` | `float \| None` | `None` | Canvas width hint in pixels |
-| `height` | `float \| None` | `None` | Canvas height hint in pixels |
+| `width` | `float \| None` | `None` | Output width in pixels (height follows the aspect ratio if omitted) |
+| `height` | `float \| None` | `None` | Output height in pixels |
 | `background` | `str \| None` | `None` | Background fill as CSS hex, e.g. `"#ffffff"`. Transparent by default. |
 
 ### `.raw(width, height, background) → tuple[bytes, int, int]`
 
 Return raw RGBA8888 pixel data as `(bytes, width, height)`.
-Stride is `width * 4`, row-major, top-to-bottom.
-No encoding — the pixel buffer comes straight out of resvg.
+Stride is `width * 4`, row-major, top-to-bottom, with straight
+(non-premultiplied) alpha. No encoding — the pixel buffer comes straight out of novasvg.
 
 ```python
 raw, w, h = d.raw(background="#ffffff")
@@ -90,7 +90,7 @@ print(f"{w}×{h}, {len(raw)} bytes")  # 640×480, 1228800 bytes
 ### `.numpy(width, height, background) → np.ndarray`
 
 Return an `(H, W, 4)` NumPy array, dtype `uint8`, RGBA channel order.
-Requires `numpy`. No Pillow needed.
+NumPy is installed automatically together with novasvg. No Pillow needed.
 
 ```python
 arr = d.numpy()
@@ -146,7 +146,7 @@ mmdr.svg_to_png(
 ) -> bytes
 ```
 
-Convert an SVG string to PNG bytes using resvg.
+Convert an SVG string to PNG bytes using novasvg.
 Useful if you already have an SVG from another source.
 
 ```python

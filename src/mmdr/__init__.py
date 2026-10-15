@@ -1,8 +1,8 @@
 """
 mmdr — Mermaid diagram rendering backed by native Rust.
 
-Two SVG backends, all rasterization via resvg — zero Python dependencies:
-  - 'merman' (default): full Mermaid @11.15.0 parity
+Two SVG backends (Rust); PNG / pixel output is rasterized by novasvg:
+  - 'merman' (default): full parity with the official Mermaid library
   - 'mermaid-rs-renderer': faster, fewer diagram types
 
 Basic usage::
@@ -22,7 +22,8 @@ Basic usage::
     # ['merman', 'mermaid-rs-renderer']
 """
 
-from ._mmdr import backends, svg_to_png, svg_to_raw, __version__
+from ._mmdr import backends, __version__
+from ._raster import svg_to_png, svg_to_raw
 from .diagram import Diagram
 
 

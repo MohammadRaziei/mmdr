@@ -27,14 +27,12 @@ print(mmdr.backends())
 # ['merman', 'mermaid-rs-renderer']
 ```
 
-## Optional dependencies
+## Dependencies
 
-mmdr has no required Python dependencies. However, `.numpy()` requires
-`numpy` if you want to use it:
-
-```bash
-pip install numpy
-```
+mmdr depends on [novasvg](https://mohammadraziei.github.io/novasvg/) (`>=0.10`),
+which handles PNG / raw-pixel output. NumPy is pulled in automatically as a
+dependency of novasvg, so `.numpy()` works out of the box. Both ship pre-built
+wheels — no compiler is needed.
 
 ## Build from source
 

@@ -2,7 +2,7 @@
 name = "mmdr-python"
 version = "0.1.0"
 edition = "2021"
-description = "Python bindings for Mermaid rendering — two backends, all rasterization via resvg"
+description = "Python bindings for Mermaid rendering — two SVG backends; rasterization is done in Python via novasvg"
 license = "MIT"
 
 [lib]
@@ -18,13 +18,8 @@ backend-merman     = ["dep:merman"]
 pyo3 = { version = "0.22", features = ["extension-module", "abi3-py39"] }
 
 # SVG backends (optional)
-mermaid-rs-renderer = { version = "0.2.2", optional = true, default-features = false }
-merman              = { version = "0.7.0",  optional = true, features = ["raster"] }
-
-# Rasterization — always present, used by svg_to_png() and svg_to_raw()
-# regardless of which SVG backend produced the string.
-resvg = "0.47.0"
-usvg  = "0.47.0"
+mermaid-rs-renderer = { version = "0.3.1", optional = true, default-features = false }
+merman              = { version = "0.9.0",  optional = true }
 
 [profile.release]
 lto   = true

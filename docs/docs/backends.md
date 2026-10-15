@@ -2,7 +2,7 @@
 
 mmdr ships with two Rust rendering engines. Both produce SVG from Mermaid
 source text. Everything else — PNG, raw pixels, NumPy — is handled by
-[resvg](https://github.com/RazrFalcon/resvg) regardless of which backend
+[novasvg](https://mohammadraziei.github.io/novasvg/) (>=0.10) regardless of which backend
 you choose.
 
 ## Comparison
@@ -10,7 +10,7 @@ you choose.
 | | `merman` | `mermaid-rs-renderer` |
 |---|:---:|:---:|
 | **Default** | ✅ | — |
-| **Diagram parity** | Full (Mermaid @11.15.0) | Common types only |
+| **Diagram parity** | Full (baseline defined by merman) | Common types only |
 | **Speed** | Fast | Faster |
 | **Layout options** | — | `theme`, `node_spacing`, `rank_spacing`, `aspect_ratio` |
 

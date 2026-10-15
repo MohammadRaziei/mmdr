@@ -13,7 +13,7 @@ That's it. No system dependencies, no extra steps.
 **Output formats:** SVG · PNG · raw RGBA pixels · NumPy array
 
 **Two backends, one package:**
-- `merman` *(default)* — targets full parity with the official Mermaid @11.15.0 library, supports all diagram types including newer ones like kanban, architecture, and c4
+- `merman` *(default)* — targets full parity with the official Mermaid library (exact baseline is defined by the merman crate, currently 0.9), supports all diagram types including newer ones like kanban, architecture, and c4
 - `mermaid-rs-renderer` — a lighter, faster alternative that covers the most common diagram types
 
 ---
@@ -149,7 +149,7 @@ print(f"image is {w}×{h} pixels, {len(raw)} bytes")
 ### NumPy
 
 `.numpy()` returns an `(H, W, 4)` array with dtype `uint8` and RGBA channel order.
-It's built on `.raw()` — requires only `numpy`, no Pillow.
+It's built on `.raw()` — NumPy comes with novasvg, no Pillow needed.
 
 ```python
 arr = d.numpy()
