@@ -107,8 +107,11 @@ jobs:
       - name: Install wheel + test deps
         shell: bash
         run: |
-          pip install --no-index --upgrade --find-links ./dist mmdr
-          pip install pytest
+          # Runtime deps come from PyPI; the wheel itself must come from ./dist
+          # (--no-index would make novasvg unresolvable).
+          pip install "novasvg>=0.10" pytest
+          pip install --no-index --no-deps --upgrade --find-links ./dist mmdr
+          pip check
 
       - uses: JesseTG/rm@v1.0.3 
         with:
