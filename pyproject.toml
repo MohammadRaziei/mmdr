@@ -4,7 +4,8 @@ build-backend = "maturin"
 
 [project]
 name = "mmdr"
-version = "0.3.0"
+# Single source of truth: the version is read from Cargo.toml by maturin.
+dynamic = ["version"]
 description = "Fast native Mermaid diagram rendering (Rust-based) - no browser required"
 readme = "README.md"
 license = { text = "MIT" }

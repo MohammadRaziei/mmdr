@@ -25,7 +25,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 - `mmdr.__version__` / `mmdr --version` reported `0.1.0` because `Cargo.toml` was out of sync
-  with `pyproject.toml`; both are now `0.3.0`.
+  with `pyproject.toml`. The version now lives only in `Cargo.toml` (`pyproject.toml` declares it
+  as `dynamic`), so the two can no longer drift apart.
 - Package metadata (author, e-mail, project URLs, classifiers) was left over from a template
   and pointed at another project; it now matches this repository.
 - An invalid `background` color now raises `ValueError` instead of being ignored.
