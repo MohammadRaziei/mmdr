@@ -246,4 +246,11 @@ raw, w, h = svg_to_raw(svg)
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
+
+## Acknowledgements
+
+mmdr is a Python wrapper around two Rust Mermaid renderers —
+[`mermaid-rs-renderer`](https://github.com/1jehuang/mermaid-rs-renderer) by 1jehuang and
+[`merman`](https://crates.io/crates/merman) — and uses
+[novasvg](https://mohammadraziei.github.io/novasvg/) for rasterization.

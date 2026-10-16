@@ -24,6 +24,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`mmdr.svg_to_png` and `mmdr.svg_to_raw` remain available, now implemented in Python).
 
 ### Fixed
+- `mmdr.__version__` / `mmdr --version` reported `0.1.0` because `Cargo.toml` was out of sync
+  with `pyproject.toml`; both are now `0.3.0`.
+- Package metadata (author, e-mail, project URLs, classifiers) was left over from a template
+  and pointed at another project; it now matches this repository.
 - An invalid `background` color now raises `ValueError` instead of being ignored.
 - Invalid SVG input raises `ValueError` with a clear message.
 

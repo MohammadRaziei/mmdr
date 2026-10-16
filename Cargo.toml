@@ -1,9 +1,12 @@
 [package]
 name = "mmdr-python"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
+authors = ["Mohammad Raziei <mohammadraziei1375@gmail.com>"]
 description = "Python bindings for Mermaid rendering — two SVG backends; rasterization is done in Python via novasvg"
 license = "MIT"
+repository = "https://github.com/mohammadraziei/mmdr"
+homepage = "https://github.com/mohammadraziei/mmdr"
 
 [lib]
 name = "_mmdr"

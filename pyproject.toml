@@ -16,23 +16,36 @@ dependencies = [
   "numpy>=1.20",
 ]
 authors = [
-  { name = "1jehuang" }
+  { name = "Mohammad Raziei", email = "mohammadraziei1375@gmail.com" }
 ]
-keywords = ["mermaid", "diagram", "svg", "render", "rust"]
+keywords = ["mermaid", "diagram", "svg", "png", "render", "rust", "cli"]
 classifiers = [
-  "Programming Language :: Rust",
-  "Programming Language :: Python :: Implementation :: CPython",
+  "Development Status :: 4 - Beta",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
+  "Programming Language :: Rust",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Multimedia :: Graphics",
+  "Topic :: Software Development :: Documentation",
+  "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 [project.urls]
-Homepage = "https://github.com/1jehuang/mermaid-rs-renderer"
-Repository = "https://github.com/1jehuang/mermaid-rs-renderer"
+Homepage = "https://github.com/mohammadraziei/mmdr"
+Repository = "https://github.com/mohammadraziei/mmdr"
+Documentation = "https://mohammadraziei.github.io/mmdr"
+Issues = "https://github.com/mohammadraziei/mmdr/issues"
+Changelog = "https://github.com/mohammadraziei/mmdr/blob/master/CHANGELOG.md"
 
 # This makes `mmdr` available as a terminal command after `pip install mmdr`,
 # same idea as mermaid-cli's `mmdc` command. It just calls main() in
-# python/mmdr/__main__.py.
+# src/mmdr/__main__.py.
 [project.scripts]
 mmdr = "mmdr.__main__:main"
 
