@@ -8,8 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **Breaking:** rasterization (PNG / raw pixels / NumPy) no longer uses `resvg`.
   It is now done in Python with [novasvg](https://mohammadraziei.github.io/novasvg/)
-  `>=0.10`, which is a new required dependency, together with `numpy>=1.20`
-  (needed to read raw pixels from novasvg). The Rust extension only produces SVG.
+  `>=0.11`, which is a new required dependency. The Rust extension only produces SVG.
+  NumPy stays optional and is only needed by `.numpy()` (`pip install mmdr[numpy]`).
 - **Breaking:** the `mermaid-rs` backend now raises `ValueError` on invalid
   diagrams (mermaid-rs-renderer 0.3), like `merman`, instead of returning an error SVG.
 - `width` / `height` now actually scale the output image. If only one is given,

@@ -149,7 +149,7 @@ print(f"image is {w}×{h} pixels, {len(raw)} bytes")
 ### NumPy
 
 `.numpy()` returns an `(H, W, 4)` array with dtype `uint8` and RGBA channel order.
-It's built on `.raw()` — NumPy is a dependency of mmdr, no Pillow needed.
+It's built on `.raw()` — requires only `numpy` (`pip install mmdr[numpy]`), no Pillow.
 
 ```python
 arr = d.numpy()

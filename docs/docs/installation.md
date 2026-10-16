@@ -30,9 +30,16 @@ print(mmdr.backends())
 ## Dependencies
 
 mmdr depends on [novasvg](https://mohammadraziei.github.io/novasvg/) (`>=0.10`),
-which handles PNG / raw-pixel output, and on [NumPy](https://numpy.org/)
-(`>=1.20`), which is how raw pixels are read out of novasvg. Both are installed
-automatically and ship pre-built wheels for the common platforms.
+which handles PNG / raw-pixel output. It is installed automatically and ships
+pre-built wheels for the common platforms.
+
+## Optional dependencies
+
+`.numpy()` requires [NumPy](https://numpy.org/):
+
+```bash
+pip install mmdr[numpy]   # or: pip install numpy
+```
 
 ## Build from source
 

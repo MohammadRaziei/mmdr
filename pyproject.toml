@@ -11,10 +11,8 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
 dependencies = [
-  "novasvg>=0.10",
-  # novasvg exposes raw pixels only through Bitmap.numpy(), and NumPy has not
-  # been a dependency of novasvg since 0.10.1.
-  "numpy>=1.20",
+  # >=0.11 provides Bitmap.tobytes(rgba=True), so no NumPy is needed for raw pixels.
+  "novasvg>=0.11",
 ]
 authors = [
   { name = "Mohammad Raziei", email = "mohammadraziei1375@gmail.com" }
@@ -51,6 +49,9 @@ Changelog = "https://github.com/mohammadraziei/mmdr/blob/master/CHANGELOG.md"
 mmdr = "mmdr.__main__:main"
 
 [project.optional-dependencies]
+numpy = [
+    "numpy>=1.20",
+]
 docs = [
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.24",

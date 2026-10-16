@@ -1,5 +1,5 @@
 """
-SVG rasterization for mmdr, backed by novasvg (>=0.10).
+SVG rasterization for mmdr, backed by novasvg (>=0.11).
 
 The Rust extension only produces SVG. Everything pixel-related lives here.
 
@@ -8,9 +8,9 @@ Notes on novasvg behaviour that this module normalises:
 * ``Document.load_from_data`` returns ``None`` for invalid SVG instead of raising.
 * ``Document.render_to_bitmap`` defaults to an *opaque black* background, so a
   transparent background has to be requested explicitly.
-* Raw pixels are only available through ``Bitmap.numpy()`` (NumPy is therefore a
-  mmdr dependency; novasvg itself no longer requires it). It returns premultiplied BGRA; ``convert_to_rgba()`` turns it
-  into straight (non-premultiplied) RGBA, which is what PNG and NumPy users expect.
+* A ``Bitmap`` stores premultiplied BGRA. ``Bitmap.tobytes(rgba=True)`` returns a
+  copy as straight (non-premultiplied) RGBA — what PNG and NumPy users expect —
+  without importing NumPy.
 """
 
 from __future__ import annotations
@@ -106,6 +106,4 @@ def svg_to_raw(
     stride ``width * 4``, and alpha is *straight* (not premultiplied).
     """
     bitmap = _render_bitmap(svg, width, height, background)
-    bitmap.convert_to_rgba()
-    w, h = bitmap.width, bitmap.height
-    return bitmap.numpy().tobytes(), w, h
+    return bitmap.tobytes(rgba=True), bitmap.width, bitmap.height

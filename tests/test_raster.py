@@ -2,13 +2,14 @@
 
 import struct
 
-import numpy as np
 import pytest
 
 import mmdr
 from mmdr import svg_to_png, svg_to_raw
 
 # 100x50 canvas: left half = 50 % transparent red, right circle = opaque blue.
+np = pytest.importorskip("numpy")  # only the pixel-inspection tests need it
+
 SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="50">'
     '<rect width="50" height="50" fill="#ff0000" fill-opacity="0.5"/>'

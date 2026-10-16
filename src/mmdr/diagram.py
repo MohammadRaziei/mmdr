@@ -107,9 +107,17 @@ class Diagram:
         """Return the diagram as a NumPy array (H×W×4, uint8, RGBA).
 
         No Pillow needed — uses :meth:`raw` directly.
-        NumPy is a dependency of mmdr and is installed automatically.
+        Requires NumPy, which is optional::
+
+            pip install numpy        # or: pip install mmdr[numpy]
         """
-        import numpy as np
+        try:
+            import numpy as np
+        except ImportError as exc:
+            raise ImportError(
+                "numpy is required for .numpy(). Install it with:\n"
+                "    pip install numpy"
+            ) from exc
 
         raw, w, h = self.raw(width=width, height=height, background=background)
         return np.frombuffer(raw, dtype=np.uint8).reshape(h, w, 4)

@@ -88,6 +88,19 @@ class TestNumpy:
         assert arr.shape[2] == 4       # RGBA
         assert arr.dtype == np.uint8
 
+    def test_numpy_raises_without_numpy(self, backend, monkeypatch):
+        import builtins
+        real_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "numpy":
+                raise ImportError("mocked: numpy not installed")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", mock_import)
+        with pytest.raises(ImportError, match="numpy"):
+            mmdr.render(SIMPLE_FLOWCHART, backend=backend).numpy()
+
     def test_numpy_consistent_with_raw(self, backend):
         """numpy() should be exactly np.frombuffer(raw, uint8).reshape(h, w, 4)."""
         import numpy as np
