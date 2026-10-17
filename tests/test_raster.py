@@ -80,6 +80,9 @@ class TestPixels:
             ("#fff", (255, 255, 255, 255)),
             ("#102030", (16, 32, 48, 255)),
             ("#10203040", (16, 32, 48, 64)),
+            ("white", (255, 255, 255, 255)),
+            ("red", (255, 0, 0, 255)),
+            ("transparent", (0, 0, 0, 0)),
         ],
     )
     def test_background_color(self, color, expected):
@@ -115,7 +118,7 @@ class TestErrors:
         with pytest.raises(ValueError, match="SVG"):
             svg_to_raw(bad)
 
-    @pytest.mark.parametrize("bad", ["red", "#12", "#gggggg", "rgb(1,2,3)"])
+    @pytest.mark.parametrize("bad", ["#12", "#gggggg", "rgb(1,2,3)", "", "not a color"])
     def test_invalid_background_raises(self, bad):
         with pytest.raises(ValueError, match="background"):
             svg_to_png(SVG, background=bad)

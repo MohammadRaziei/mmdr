@@ -15,33 +15,19 @@ Notes on novasvg behaviour that this module normalises:
 
 from __future__ import annotations
 
-import re
-
 import novasvg
-
-_HEX_RE = re.compile(r"^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
 
 
 def _parse_color(value: str | None) -> "novasvg.Color":
-    """Parse a CSS hex color (``#rgb``, ``#rrggbb`` or ``#rrggbbaa``).
-
-    ``None`` means fully transparent.
+    """Parse a CSS color with novasvg (hex ``#rgb`` / ``#rrggbb`` / ``#rrggbbaa``,
+    or a CSS color name such as ``"white"``). ``None`` means fully transparent.
     """
     if value is None:
         return novasvg.Color(0, 0, 0, 0)
-
-    match = _HEX_RE.match(value.strip())
-    if match is None:
-        raise ValueError(
-            f"invalid background color {value!r}; expected a CSS hex color "
-            "such as '#ffffff'"
-        )
-    digits = match.group(1)
-    if len(digits) == 3:
-        digits = "".join(ch * 2 for ch in digits)
-    r, g, b = (int(digits[i : i + 2], 16) for i in (0, 2, 4))
-    a = int(digits[6:8], 16) if len(digits) == 8 else 255
-    return novasvg.Color(r, g, b, a)
+    try:
+        return novasvg.Color(value)
+    except ValueError as exc:
+        raise ValueError(f"invalid background color {value!r}: {exc}") from exc
 
 
 def _to_px(value: float | None, name: str) -> int:
@@ -88,8 +74,9 @@ def svg_to_png(
                     the other follows the SVG's aspect ratio. Default: the SVG's
                     intrinsic size.
         height:     Output height in pixels.
-        background: CSS hex color such as ``"#ffffff"`` (``#rrggbbaa`` is also
-                    accepted). Transparent by default.
+        background: Any color novasvg understands: CSS hex such as ``"#ffffff"``
+                    (``#rgb`` and ``#rrggbbaa`` too) or a CSS name such as
+                    ``"white"``. Transparent by default.
     """
     return _render_bitmap(svg, width, height, background).to_png()
 

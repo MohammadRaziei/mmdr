@@ -74,7 +74,7 @@ with open("output.png", "wb") as f:
 |---|---|---|---|
 | `width` | `float \| None` | `None` | Output width in pixels (height follows the aspect ratio if omitted) |
 | `height` | `float \| None` | `None` | Output height in pixels |
-| `background` | `str \| None` | `None` | Background fill as CSS hex, e.g. `"#ffffff"`. Transparent by default. |
+| `background` | `str \| None` | `None` | Background fill as a CSS hex color or color name, e.g. `"#ffffff"` or `"white"`. Transparent by default. |
 
 ### `.raw(width, height, background) → tuple[bytes, int, int]`
 

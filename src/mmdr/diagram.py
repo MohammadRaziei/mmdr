@@ -75,7 +75,7 @@ class Diagram:
         Args:
             width:      Output width in pixels (height follows the aspect ratio if omitted).
             height:     Output height in pixels.
-            background: Background fill as a CSS hex color, e.g. ``"#ffffff"``.
+            background: Background fill as a CSS hex color or color name, e.g. ``"#ffffff"``.
                         Transparent by default.
         """
         return _raster.svg_to_png(self.svg(), width, height, background)
@@ -94,7 +94,7 @@ class Diagram:
         Args:
             width:      Output width in pixels (height follows the aspect ratio if omitted).
             height:     Output height in pixels.
-            background: Background fill as a CSS hex color.
+            background: Background fill as a CSS hex color or color name.
         """
         return _raster.svg_to_raw(self.svg(), width, height, background)
 

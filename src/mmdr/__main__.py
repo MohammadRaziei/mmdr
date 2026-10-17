@@ -79,7 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "-b", "--background", default=None, metavar="COLOR",
-        help="Background color as CSS hex, e.g. '#ffffff' (PNG only).",
+        help="Background color: CSS hex or name, e.g. '#ffffff' or white (PNG only).",
     )
     parser.add_argument(
         "--node-spacing", type=float, default=None,
