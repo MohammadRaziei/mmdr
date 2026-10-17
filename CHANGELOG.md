@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-17
+
 ### Changed
 - **Breaking:** rasterization (PNG / raw pixels / NumPy) no longer uses `resvg`.
   It is now done in Python with [novasvg](https://mohammadraziei.github.io/novasvg/)
@@ -17,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `.raw()` and `.numpy()` now return straight (non-premultiplied) RGBA.
 - Updated backends: `merman` 0.7.0 → 0.9.0 and `mermaid-rs-renderer` 0.2.2 → 0.3.1.
   `merman` 0.9 requires Rust 1.95 or newer to build from source.
+- Updated `pyo3` 0.22 → 0.30 (no code changes were needed).
 
 ### Removed
 - `resvg` and `usvg` dependencies, and the `raster` feature of `merman`.
@@ -75,7 +78,8 @@ First public release.
 - Several publish-workflow issues (build matrix formatting, `maturin` flags,
   `pytest` invocation and working directory).
 
-[Unreleased]: https://github.com/mohammadraziei/mmdr/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/mohammadraziei/mmdr/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/mohammadraziei/mmdr/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mohammadraziei/mmdr/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/mohammadraziei/mmdr/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mohammadraziei/mmdr/releases/tag/v0.1.0
