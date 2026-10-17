@@ -135,51 +135,6 @@ mmdr.backends()
 
 ---
 
-## `mmdr.svg_to_png()`
-
-```python
-mmdr.svg_to_png(
-    svg: str,
-    width: float | None = None,
-    height: float | None = None,
-    background: str | None = None,
-) -> bytes
-```
-
-Convert an SVG string to PNG bytes using novasvg.
-Useful if you already have an SVG from another source.
-
-```python
-from mmdr import svg_to_png
-
-svg = open("existing.svg").read()
-png = svg_to_png(svg, width=800, background="#ffffff")
-```
-
----
-
-## `mmdr.svg_to_raw()`
-
-```python
-mmdr.svg_to_raw(
-    svg: str,
-    width: float | None = None,
-    height: float | None = None,
-    background: str | None = None,
-) -> tuple[bytes, int, int]
-```
-
-Convert an SVG string to raw RGBA8888 pixel data.
-Returns `(bytes, width, height)`.
-
-```python
-from mmdr import svg_to_raw
-
-raw, w, h = svg_to_raw(open("existing.svg").read())
-```
-
----
-
 ## Jupyter integration
 
 `Diagram` implements `_repr_svg_()`, so it renders inline automatically

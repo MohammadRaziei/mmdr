@@ -204,18 +204,16 @@ tuned for parity with the official library.
 
 ---
 
-## Low-level utilities
+## Rasterizing an existing SVG
 
-If you already have an SVG string from another source, you can rasterize it
-directly without going through `render()`:
+mmdr only renders Mermaid. If you already have an SVG string from another source,
+use [novasvg](https://mohammadraziei.github.io/novasvg/) (already installed with mmdr) directly:
 
 ```python
-from mmdr import svg_to_png, svg_to_raw
+import novasvg
 
-svg = open("diagram.svg").read()
-
-png = svg_to_png(svg, width=1200, background="#ffffff")
-raw, w, h = svg_to_raw(svg)
+doc = novasvg.Document.load_from_data(open("diagram.svg").read())
+png = doc.render_to_bitmap(1200, -1, novasvg.Color("white")).to_png()
 ```
 
 ---

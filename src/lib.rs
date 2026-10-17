@@ -39,7 +39,7 @@ fn resolve_backend(name: Option<&str>) -> PyResult<Backend> {
 
 // ---------------------------------------------------------------------------
 // SVG rendering — each backend only produces SVG, nothing else.
-// Rasterization (PNG / raw pixels) lives in Python (mmdr._raster, via novasvg).
+// Rasterization (PNG / raw pixels) lives in Python (mmdr.Diagram, via novasvg).
 // ---------------------------------------------------------------------------
 
 #[cfg(feature = "backend-mermaid-rs")]

@@ -23,7 +23,6 @@ Basic usage::
 """
 
 from ._mmdr import backends, __version__
-from ._raster import svg_to_png, svg_to_raw
 from .diagram import Diagram
 
 
@@ -49,4 +48,4 @@ def render(
     return Diagram(diagram, backend=backend, **opts)
 
 
-__all__ = ["render", "Diagram", "backends", "svg_to_png", "svg_to_raw", "__version__"]
+__all__ = ["render", "Diagram", "backends", "__version__"]

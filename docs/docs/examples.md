@@ -91,20 +91,23 @@ print(f"{white_ratio:.1%} of pixels are white")
 
 ## Rasterize an existing SVG
 
-Use `svg_to_png` and `svg_to_raw` directly on any SVG string:
+mmdr only renders Mermaid, but it installs [novasvg](https://mohammadraziei.github.io/novasvg/),
+which you can use directly on any SVG string:
 
 ```python
-from mmdr import svg_to_png, svg_to_raw
+import novasvg
 
 svg = open("diagram.svg").read()
+doc = novasvg.Document.load_from_data(svg)  # returns None if the SVG is invalid
 
-# → PNG
-png = svg_to_png(svg, width=1200, background="#ffffff")
+# → PNG (width 1200, height follows the aspect ratio, white background)
+png = doc.render_to_bitmap(1200, -1, novasvg.Color("white")).to_png()
 open("output.png", "wb").write(png)
 
-# → raw RGBA pixels
-raw, w, h = svg_to_raw(svg)
-print(f"{w}×{h} pixels, {len(raw)} bytes")
+# → raw straight-alpha RGBA pixels
+bitmap = doc.render_to_bitmap(-1, -1, novasvg.Color(0, 0, 0, 0))
+raw = bitmap.tobytes(rgba=True)
+print(f"{bitmap.width}×{bitmap.height} pixels, {len(raw)} bytes")
 ```
 
 ## FastAPI endpoint

@@ -20,8 +20,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 - `resvg` and `usvg` dependencies, and the `raster` feature of `merman`.
-- `mmdr._mmdr.svg_to_png` / `svg_to_raw` in the Rust extension
-  (`mmdr.svg_to_png` and `mmdr.svg_to_raw` remain available, now implemented in Python).
+- **Breaking:** `mmdr.svg_to_png()` and `mmdr.svg_to_raw()` (and the Rust functions behind them).
+  mmdr only renders Mermaid now; to rasterize an arbitrary SVG string use novasvg directly
+  (`novasvg.Document.load_from_data(svg).render_to_bitmap(...)`). `Diagram.png()`,
+  `.raw()` and `.numpy()` are unchanged.
 
 ### Fixed
 - `mmdr.__version__` / `mmdr --version` reported `0.1.0` because `Cargo.toml` was out of sync
@@ -30,7 +32,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Package metadata (author, e-mail, project URLs, classifiers) was left over from a template
   and pointed at another project; it now matches this repository.
 - An invalid `background` color now raises `ValueError` instead of being ignored.
-- Invalid SVG input raises `ValueError` with a clear message.
 
 ### Documentation
 - Removed the pinned "Mermaid @11.15.0" parity claim; the baseline is defined by the `merman` crate.

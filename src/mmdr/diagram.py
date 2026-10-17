@@ -11,7 +11,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from . import _mmdr, _raster
+import novasvg
+
+from . import _mmdr
 
 if TYPE_CHECKING:
     import numpy as np
@@ -64,6 +66,23 @@ class Diagram:
     # Rasterization — always via novasvg
     # ------------------------------------------------------------------
 
+    def _bitmap(
+        self,
+        width: float | None,
+        height: float | None,
+        background: str | None,
+    ) -> "novasvg.Bitmap":
+        doc = novasvg.Document.load_from_data(self.svg())
+        if doc is None:  # novasvg signals a parse error with None, not an exception
+            raise ValueError("SVG parse error: novasvg could not load the document")
+        # novasvg's default background is opaque black, so transparency must be explicit.
+        # -1 means "automatic": the size (or the other dimension) follows the SVG.
+        return doc.render_to_bitmap(
+            -1 if width is None else round(width),
+            -1 if height is None else round(height),
+            novasvg.Color(0, 0, 0, 0) if background is None else novasvg.Color(background),
+        )
+
     def png(
         self,
         width: float | None = None,
@@ -78,7 +97,7 @@ class Diagram:
             background: Background fill as a CSS hex color or color name, e.g. ``"#ffffff"``.
                         Transparent by default.
         """
-        return _raster.svg_to_png(self.svg(), width, height, background)
+        return self._bitmap(width, height, background).to_png()
 
     def raw(
         self,
@@ -96,7 +115,8 @@ class Diagram:
             height:     Output height in pixels.
             background: Background fill as a CSS hex color or color name.
         """
-        return _raster.svg_to_raw(self.svg(), width, height, background)
+        bitmap = self._bitmap(width, height, background)
+        return bitmap.tobytes(rgba=True), bitmap.width, bitmap.height
 
     def numpy(
         self,
