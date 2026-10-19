@@ -5,6 +5,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Tuned the `release` profile for a smaller binary without slowing rendering:
+  `lto = "fat"`, `codegen-units = 1`, `panic = "abort"` (plus the existing `strip = true`).
+  In local tests on x86_64 the wheel shrank by about 7% (11.93 MB → 11.13 MB, both backends)
+  with the same render speed as before; all features of both backends are unchanged.
+- A panic inside the Rust extension now aborts the Python process instead of being raised as
+  `pyo3_runtime.PanicException`. Invalid diagrams still raise `ValueError` as before.
+
 ## [0.4.0] - 2026-10-17
 
 ### Changed
