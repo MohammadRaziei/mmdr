@@ -110,7 +110,7 @@ jobs:
           # Runtime deps come from PyPI; the wheel itself must come from ./dist
           # (--no-index would make novasvg unresolvable).
           # numpy is only needed by the tests (it is optional at runtime)
-          pip install "novasvg>=0.11" numpy pytest
+          pip install "novasvg>=0.11" numpy pytest pytest-cov
           pip install --no-index --no-deps --upgrade --find-links ./dist mmdr
           pip check
 
@@ -118,8 +118,25 @@ jobs:
         with:
           path: pyproject.toml
 
-      - name: Run tests 
-        run: python3 -m pytest tests/ -v
+      # Coverage is measured on the installed wheel (pyproject.toml is removed
+      # above, so ./src is not on the path). Settings live in .coveragerc.
+      - name: Run tests with coverage
+        run: python3 -m pytest tests/ -v --cov=mmdr --cov-report=term-missing --cov-report=xml
+
+      - name: Coverage summary
+        if: always() && matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          echo "### Test coverage (Python package)" >> "$GITHUB_STEP_SUMMARY"
+          python3 -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload coverage report
+        if: always() && matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
   # Docs — build and deploy to GitHub Pages

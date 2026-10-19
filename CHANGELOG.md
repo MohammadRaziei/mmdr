@@ -13,6 +13,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A panic inside the Rust extension now aborts the Python process instead of being raised as
   `pyo3_runtime.PanicException`. Invalid diagrams still raise `ValueError` as before.
 
+### Added
+- Test coverage (branch coverage of the Python package) is now measured in CI with
+  `pytest-cov`. The report is printed in the job log, shown in the job summary and uploaded as a
+  `coverage-xml` artifact. Settings are in `.coveragerc`. Coverage of the Rust extension is not
+  measured.
+
 ## [0.4.0] - 2026-10-17
 
 ### Changed

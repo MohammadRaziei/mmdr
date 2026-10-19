@@ -38,6 +38,7 @@ venv.bak/
 # pytest & coverage
 .pytest_cache/
 .coverage
+coverage.xml
 htmlcov/
 .directory
 .mypy_cache/

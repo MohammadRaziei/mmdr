@@ -1,0 +1,14 @@
+# Coverage settings.
+# Kept out of pyproject.toml on purpose: the CI "test" job deletes pyproject.toml
+# so that the tests import the installed wheel instead of ./src.
+[run]
+source = mmdr
+branch = True
+
+[report]
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:
+    raise NotImplementedError
