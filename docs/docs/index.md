@@ -52,15 +52,15 @@ heavy to install, and awkward to embed in a pipeline.
 
 mmdr takes a different approach: the rendering engine is compiled Rust,
 shipped as a native Python extension. No JS runtime, no browser, no extra
-system dependencies — just a ~7 MB wheel.
+system dependencies — everything is in the wheel.
 
 | | mmdr | mermaid-cli |
 |---|:---:|:---:|
 | Requires Node.js | ❌ | ✅ |
 | Requires a browser | ❌ | ✅ |
 | `pip install` only | ✅ | ❌ |
-| Startup time | ~0ms | ~3–5s |
-| Speed | 100–1400x faster | baseline |
+| First render in a process | 7–14 ms | 1.94 s |
+| Median per diagram | 16–23 ms | 791 ms |
 
 ---
 
@@ -68,8 +68,8 @@ system dependencies — just a ~7 MB wheel.
 
 mmdr ships with two Rust rendering engines in one package:
 
-- **`merman`** *(default)* — targets full parity with the official Mermaid library (baseline defined by the merman crate), supports all diagram types
-- **`mermaid-rs-renderer`** — faster and lighter, covers the most common diagram types
+- **`merman`** *(default)* — targets full parity with the official Mermaid library (baseline defined by the merman crate), drew all 50 diagrams of the benchmark
+- **`mermaid-rs-renderer`** — the faster of the two; it rejects some syntax that `merman` accepts
 
 ```python
 mmdr.backends()
@@ -89,3 +89,9 @@ See [Backends](backends.md) for a full comparison.
 | Raw RGBA pixels | `.raw()` |
 | NumPy array | `.numpy()` |
 | File (auto-detect) | `.save("out.svg")` |
+
+---
+
+## Benchmark numbers
+
+The speed rows in the table under *Why mmdr?* come from the [mermaidx benchmark](https://mohammadraziei.github.io/mermaidx/benchmarks): 50 diagrams, Mermaid text to PNG, `mmdc` started once per diagram. The ranges are the two mmdr backends (`merman` and `mermaid-rs-renderer`). Absolute times depend on the CI machine; see [how the benchmarks work](https://mohammadraziei.github.io/mermaidx/docs/benchmarks-method).

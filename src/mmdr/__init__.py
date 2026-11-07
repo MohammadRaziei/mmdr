@@ -22,6 +22,8 @@ Basic usage::
     # ['merman', 'mermaid-rs-renderer']
 """
 
+from __future__ import annotations
+
 from ._mmdr import backends, __version__
 from .diagram import Diagram
 

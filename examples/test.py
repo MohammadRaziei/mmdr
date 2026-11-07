@@ -15,11 +15,12 @@ DIAGRAM = "flowchart LR; A-->B-->C"
 for backend in mmdr.backends():
     print(f"\n--- {backend} ---")
 
-    svg = mmdr.render(DIAGRAM, backend=backend)
+    d = mmdr.render(DIAGRAM, backend=backend)
+    svg = d.svg()
     assert "<svg" in svg
     print(f"SVG OK ({len(svg)} bytes)")
 
-    png = mmdr.render_png(DIAGRAM, backend=backend)
+    png = d.png()
     assert png[:8] == b"\x89PNG\r\n\x1a\n"
     print(f"PNG OK ({len(png)} bytes)")
 

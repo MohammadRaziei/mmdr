@@ -7,6 +7,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.4.1] - 2026-11-08
 
+### Fixed
+- `import mmdr` raised `TypeError` on Python 3.9, which the package declares as supported: the
+  `str | None` annotation in `mmdr/__init__.py` was evaluated at import time. Added
+  `from __future__ import annotations`.
+- `examples/test.py` still called `mmdr.render_png()`, which was removed in 0.4.0.
+
+### Documentation
+- Rewrote the README: runnable example first, benchmark table from the
+  [mermaidx benchmark](https://mohammadraziei.github.io/mermaidx/benchmarks) with its caveats, and a
+  diagram that shows who does what.
+- Removed claims the benchmark does not back from the docs ("100–1400x faster", "~0ms startup",
+  "~7 MB wheel").
+- Corrected the diagram-support tables: both backends render all the listed types, and
+  `mermaid-rs-renderer` differs by rejecting some syntax, not whole diagram types.
+- Docs now say novasvg is pinned to 0.11.5 instead of `>=0.10`.
+
 ### Changed
 - Dependencies are now pinned to exact versions: `pyo3 =0.30.1`, `mermaid-rs-renderer =0.3.1`
   and `merman =0.9.3` in `Cargo.toml`, and `novasvg==0.11.5` in `pyproject.toml` (and in the
