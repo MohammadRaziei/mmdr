@@ -19,8 +19,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   diagram that shows who does what.
 - Removed claims the benchmark does not back from the docs ("100–1400x faster", "~0ms startup",
   "~7 MB wheel").
-- Corrected the diagram-support tables: both backends render all the listed types, and
-  `mermaid-rs-renderer` differs by rejecting some syntax, not whole diagram types.
+- Rebuilt the diagram-support tables in the README and docs from the benchmark results: they now
+  list 28 diagram types with the samples each backend drew. The old table marked block,
+  architecture, kanban, C4, sankey and packet as unsupported by `mermaid-rs-renderer`, but it
+  renders them; it differs by rejecting some syntax of `info`, sequence and class diagrams.
 - Docs now say novasvg is pinned to 0.11.5 instead of `>=0.10`.
 
 ### Changed
