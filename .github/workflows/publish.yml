@@ -110,7 +110,7 @@ jobs:
           # Runtime deps come from PyPI; the wheel itself must come from ./dist
           # (--no-index would make novasvg unresolvable).
           # numpy is only needed by the tests (it is optional at runtime)
-          pip install "novasvg>=0.11" numpy pytest pytest-cov
+          pip install "novasvg==0.11.5" numpy pytest pytest-cov
           pip install --no-index --no-deps --upgrade --find-links ./dist mmdr
           pip check
 
