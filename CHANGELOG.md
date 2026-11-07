@@ -5,7 +5,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-08
+
 ### Changed
+- Dependencies are now pinned to exact versions: `pyo3 =0.30.1`, `mermaid-rs-renderer =0.3.1`
+  and `merman =0.9.3` in `Cargo.toml`, and `novasvg==0.11.5` in `pyproject.toml` (and in the
+  CI test job), so builds and test runs are reproducible.
+- Updated backend `merman` 0.9.0 → 0.9.3 and `pyo3` 0.30 → 0.30.1 (no code changes were needed).
+- Package description now says that both backends, `mermaid-rs-renderer` and `merman`, are
+  supported.
 - Tuned the `release` profile for a smaller binary without slowing rendering:
   `lto = "fat"`, `codegen-units = 1`, `panic = "abort"` (plus the existing `strip = true`).
   In local tests on x86_64 the wheel shrank by about 7% (11.93 MB → 11.13 MB, both backends)
@@ -92,7 +100,8 @@ First public release.
 - Several publish-workflow issues (build matrix formatting, `maturin` flags,
   `pytest` invocation and working directory).
 
-[Unreleased]: https://github.com/mohammadraziei/mmdr/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/mohammadraziei/mmdr/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/mohammadraziei/mmdr/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/mohammadraziei/mmdr/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mohammadraziei/mmdr/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/mohammadraziei/mmdr/compare/v0.1.0...v0.2.0
