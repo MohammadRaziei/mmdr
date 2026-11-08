@@ -11,6 +11,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `import mmdr` raised `TypeError` on Python 3.9, which the package declares as supported: the
   `str | None` annotation in `mmdr/__init__.py` was evaluated at import time. Added
   `from __future__ import annotations`.
+- The release job failed `twine check` with `InvalidDistribution: Unknown distribution format: 'coverage.xml'`:
+  it downloaded every workflow artifact into `dist/`, including the coverage report. The test and
+  release jobs now download only `wheels-*` artifacts.
 - `examples/test.py` still called `mmdr.render_png()`, which was removed in 0.4.0.
 
 ### Documentation
