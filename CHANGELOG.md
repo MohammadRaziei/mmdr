@@ -5,6 +5,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-11-22
+
+### Changed
+- **`merman` 0.9.3 -> 0.11.0** (the latest on crates.io on 2026-11-22). `pyo3` 0.30.1 and `mermaid-rs-renderer` 0.3.1 are already the latest and stay.
+  The API this crate calls (`Renderer::render`, `RenderRequest::svg`, `SvgRequest { pipeline, .. }`, `SvgPipeline::resvg_safe()`, `RenderOutput::Svg`)
+  is still there in 0.11.0: the crate builds with it (Rust 1.97, dev profile) and the test suite passes (119 tests).
+- **`novasvg` is now `>=0.11.6,<0.12.0`** (was `==0.11.5`), the same range as mermaidx.
+
 ## [0.4.1] - 2026-11-08
 
 ### Fixed
